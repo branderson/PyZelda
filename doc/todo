@@ -1,0 +1,35 @@
+Implement state
+    Save and load
+        Look into serialization
+    Might want to change scenes to list instead of dict for draw order
+CoordinateSurface
+    Append remove_object so that it can remove one at position or remove all at position
+    Consider integrating insert_object_centered as a flag into insert_object
+    A large portion of this might be unnecessary (I may have been able to use subsurfaces)
+    Need to change tint functionality in coordinate surface to save to return a new surface, like game_objects do
+    Don't use the same layer for any two objects, results in crazy drawing when they overlap. No real fix probably possible
+    Add zoom function
+Scene
+    Perhaps make 0 in scene_width/scene_height make the room infinite
+    Add a looping toggle to scenes for wrap
+    Doesn't handle multiple of the same objects well
+GameObject
+    Implement animation
+        Should be implemented but needs to be tested
+    Add get_center function
+    Add scale function
+    Find some way to not have to scale every frame, uses lots of CPU
+        Same with rotate
+    Add easy way to store text in objects
+    Tint will be infinitely faster if done by creating a colored surface and blitting it to the objects image.
+Spritesheet
+    Add methods for spacing between sprites, strips that are multiple lines, etc
+Implement resource dictionaries
+    Sprite/spritesheet functionality implemented
+    Need a way to load fonts at the proper size
+    Don't render fonts a lot
+Update the enginedocs
+    Append if active stuff to them
+Implement dirty rect animation
+    May not be feasible due to abstraction of views/scrolling inherent to engine
+Look into possibly using cairo for final drawing

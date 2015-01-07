@@ -1,0 +1,39 @@
+Dec. 23
+    Fixed states and other objects sharing properties between members of a class
+    Worked on getting the documentation up to date.
+    Small tweaks to engine and consistency improvements.
+Dec. 22
+    Fixed rotation bug when changing screen size
+    Added collision detection!
+    Added states
+    Added collision rects for game objects
+    Added functions for updating and drawing all scenes in a state
+    Added radial movement for game objects
+Dec. 21
+    Added GameObject visibility toggle
+    Added absolute movement for views
+    Added rotation about center for objects
+    Added flip, surprisingly difficult with rotation correction
+    Added center view on object
+    Added animation but not yet tested
+Dec. 20
+    Fixed objects not being drawn when moved too far, was checking rect which doesn't change instead of check_position()
+    Layers added
+    Tinting added
+    Objects can have multiple stored images, stored in dictionary
+    Views stored in dictionary instead of list
+    Resource dictionaries added, only handle sprites so far
+Dec. 19
+    Views no longer own objects
+    Scale rects are now only calculated on draw and not stored
+    Multiple views can be owned by a scene and on screen at once!
+    Masks work!!!
+        Fixed masks so objects are drawn if they have at least one of the masks, rather than all of them
+Up to Dec. 17
+    Clock implemented
+    CoordinateSurface implemented
+        Coordinate surface holds lists of pointers to objects
+        Able to resize to any screen resolution
+            Even on the fly!
+    GameObject implemented
+    Spritesheet implemented

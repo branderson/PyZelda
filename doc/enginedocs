@@ -1,0 +1,416 @@
+Engine Documentation
+    coordsurface.py
+        CoordinateSurface(rect, coordinate_rect) -> Pygame Surface, with functions for manipulating objects in
+            2 dimensional coordinate grid and drawing objects to surface
+
+        Parameters
+            rect -> Rect. Defines the rectangular area of the surface
+            coordinate_size -> Tuple. Defines the coordinate size of the surface
+        Properties
+            Inherits pygame.Surface
+            coordinate_array -> Read-only. Dictionary. Holds GameObjects and uses tuples representing coordinates
+                as keys. (0, 0) is top left, coordinate_size defines bottom right
+            layers -> Read-only. List. Sorted list of layers held in coordinate_array. Used for draw order.
+            x_scale -> Read-only. Float. Used as a multiplier for scaling objects to screen size.
+            y_scale -> Read-only. Float. Used as a multiplier for scaling objects to screen size.
+            active -> Read-write. Boolean. Determines whether to draw/update surface.
+            coordinate_width -> Read-only. Integer. Horizontal coordinates in surface.
+            coordinate_height -> Read-only. Integer. Vertical coordinates in surface.
+        Methods
+            insert_object(game_object, coordinate) -> Boolean. Inserts game_object  with top-left at coordinate in
+                surface. Returns true if successful or false if coordinate outside surface.
+                Parameters
+                    game_object -> GameObject. Object to be inserted.
+                    coordinate -> Tuple. Coordinate position to insert top-left corner at.
+            insert_object_centered(game_object, (x_coordinate, y_coordinate)) -> Inserts game_object centered at
+                coordinate in surface. Returns true if successful.
+                Parameters
+                    game_object -> GameObject. Object to be inserted.
+                    coordinate -> Tuple. Coordinate position to insert centered at.
+            remove_object(game_object=None) -> Boolean. Removes game_object from surface. Returns true if object
+                was in surface.
+                Parameters
+                    game_object -> GameObject. Object to be deleted.
+            clear() -> Deletes all GameObjects on the surface.
+            check_collision(coordinate) -> Boolean. Checks if there is a GameObject at coordinate in surface.
+                Parameters
+                    coordinate -> Tuple. Position to check for object at.
+            check_collision_objects(coordinate) -> List. Returns list of GameObjects at coordinate in surface.
+                Parameters
+                    coordinate -> Tuple. Position to check for objects at.
+            move_object(game_object, coordinate) -> Boolean. Moves game_object to coordinate in surface specified.
+                Returns true if game_object in surface initially.
+                Parameters
+                    game_object -> GameObject. Object to be moved.
+                    coordinate -> Tuple. Position to move object to.
+            increment_object(game_object, increment) -> Boolean. Moves game_object in surface by increment specified.
+                Return true if game_object in surface initially.
+                Parameters
+                    game_object -> GameObject. Object to be moved.
+                    increment -> Tuple. Amount to increment object by.
+            check_position(self, game_object) -> Tuple. Checks for position of object in surface. Returns None if not
+                in surface.
+                Parameters
+                    game_object -> GameObject. Object to look for in surface.
+            convert_to_surface_coordinates(coordinate) -> Tuple. Converts a coordinate on the screen to a coordinate in
+                the surface.
+                Parameters
+                    coordinate -> Tuple. Screen coordinate to convert.
+            convert_to_screen_coordinates(coordinate) -> Tuple. Converts a coordinate in the surface to a coordinate on
+                the screen.
+                Parameters
+                    coordinate -> Tuple. Surface coordinate to convert.
+            update(fill=None, masks=None) -> Fills the surface with fill color and draws all GameObjects in surface that
+                are visible and contain at least one of the specified masks (or all GameObjects if no masks are
+                specified) to their corresponding screen position on the surface.
+                Parameters
+                    fill -> 3-Tuple. Defaults to transparent. Color to fill the surface with to clear it before drawing.
+                    masks -> List. List of masks to draw to surface. Searches through surface and only draws GameObjects
+                        with at least one of the specified masks.
+            tint((r, g, b, a)) -> Tints surface by color specified. Use after update and before blit. Only for stills.
+                Consider drawing colored surface with desired alpha over surface instead.
+                Parameters
+                    (r, g, b, a) -> Color. Color to tint surface by.
+            update_screen_coordinates(self, new_size) -> Adjusts scaling to new screen size.
+                Parameters
+                    new_size -> Tuple. New height and width to adjust to.
+            draw_object(game_object) -> Draws game_object at surface position scaled to screen size to surface.
+                Parameters
+                    game_object -> Object to draw to the surface.
+
+    gameclock.py
+        GameClock(ticks_per_second=25, max_fps=0, use_wait=True, max_frame_skip=5,
+        update_callback=None, frame_callback=None, time_source=None)
+
+        Manage time in the following ways:
+
+        1. Run game engine at a constant speed, independent of variable frame rate.
+        2. Schedule items to coincide with tick(), update_ready, frame_ready, and
+           elapsed intervals.
+        3. Employ on-demand time dilation.
+
+        In functions, program what should happen in one second and divide by TICKS_PER_SECOND
+
+        Parameters:
+            ticks_per_second -> Positive integer. Constant ticks per second for
+                game physics.
+            max_fps -> Positive integer. Max frames allowed per second. A value of
+                zero allows unlimited frames.
+            use_wait -> Boolean. When True, GameClock.tick() uses time.sleep to
+                throttle frames per second. This uses less CPU at the postential
+                cost of smoothness. When False, GameClock.tick() returns without
+                injecting any waits, and can result in smoother frames.
+            max_frame_skip -> Positive integer. Max game ticks allowed before
+                forcing a frame display.
+            update_callback -> Callable. Special callback to invoke when update is
+                ready.
+            frame_callback -> Callable. Special callback to invoke when frame is
+                ready.
+            time_source -> Callable. Custom time source, e.g.
+                lambda:pygame.time.get_ticks() / 1000.0.
+        Properties:
+            interpolate -> Read-only. Float (range 0 to 1) factor representing the
+                exact point in time between the previous and next ticks.
+            update_ready -> Read-only. Boolean indicating it is time to update the
+                game logic.
+            frame_ready -> Read-only. Boolean indicating it is time to update the
+                display.
+            dilation -> Read-write. Set the time dilation factor. Normal==1.0,
+                Slower>1.0, Faster<1.0. Affects DT and interval timers.
+            update_callback -> Read-write. The callback function to invoke at each
+                update_ready interval.
+            frame_callback -> Read-write. The callback function to invoke at each
+                frame_ready interval.
+            fps, frame_count, frame_elapsed -> Read-only. Most recent FPS,
+                cumulative frames posted during the current second, and time elapsed
+                in the previous frame, respectively.
+            ups, update_count, update_elapsed -> Read-only. Most recent updates per
+                second, cumulative updates posted during the current second, and
+                time elapsed in the previous update, respectively.
+            tps -> Read-only. Most recently measured tick() calls per second.
+            time -> Read-write. The value from the last poll of time source.
+            ticks_per_second -> Read-write. See parameter ticks_per_second.
+            max_fps -> Read-write. See parameter max_fps.
+            use_wait -> Read-write. See parameter use_wait.
+            max_frame_skip -> Read-write. See parameter max_frame_skip.
+        Methods:
+            tick() -> Game loop timer. Call once per game loop.
+            get_time() -> Return the milliseconds elapsed in the previous call to tick().
+            get_fps() -> Return the frame rate from the previous second.
+            get_ups() -> Return the update rate from the previous second.
+            schedule(), schedule_update(), schedule_update_priority(),
+                schedule_frame(), schedule_frame_priority(),
+                schedule_interval() -> Various scheduling facilities.
+            unschedule() -> Schedule removal.
+
+    gameobject.py
+        GameObject(image=None, layer=0, masks=None) -> Creates new GameObject with image, layer, and masks
+
+        Parameters
+            image -> Image. Image to insert as 'image' into images dictionary and set as initial image. Set to blank
+                surface if none specified.
+            layer -> Integer. Layer to draw object at. Lower layers are drawn first within a Scene/CoordinateSurface
+            masks -> Key. Key to specify which group object is seen with.
+        Properties
+            Inherits pygame.Sprite
+            image
+            image_scaled
+            current_image
+            images
+            masks
+            current_animation
+            animation_frame
+            rect
+            rect_scaled
+            rect_draw
+            collision_rect
+            layer
+            visible
+            angle
+            flipped_hor
+            flipped_ver
+        Methods
+            add_mask(mask) -> Appends mask to masks.
+                Parameters
+                    mask -> Mask to append.
+            remove_mask(mask) -> Removes the mask from the masks list.
+                Parameters
+                    mask -> Mask to remove.
+            add_image(key, surface) -> Adds surface to images dictionary at key.
+                Parameters
+                    key -> Key. Key to insert surface at.
+                    surface -> Surface. Surface to add to images.
+            change_image(key) -> Changes current_image to image specified by key.
+                Parameters
+                    key -> Key.
+            remove_image(key) -> Removes image specified by key from images.
+                Parameters
+                    key -> Key.
+            add_animation(key, image_list) -> Adds image_list to images at key.
+                Parameters
+                    key -> Key.
+                    image_list -> List.
+            change_animation_frame(key, frame) -> Switches the current frame of animation to specified frame
+                Parameters
+                    key -> Key.
+                    frame -> Integer
+            set_animation(key, starting_frame=0) -> Sets the current animation to animation at key, with specified
+                starting frame. Defaults to frame 0.
+                Parameters
+                    key -> Key.
+                    starting_frame -> Frame of animation to set to current image
+            next_frame(direction=1) -> Sets the current image to the next frame of the image if direction is 1, or
+                previous frame if direction is -1.
+                Parameters
+                    direction -> 1 or -1. Direction to iterate through animation.
+            destroy() -> deletes the object (probably not necessary)
+            width() -> Returns rect.width
+            height() -> Returns rect.height
+            draw(surface, x_scale, y_scale, x, y) -> Scales the current image to the surface and draws it to the surface
+                Parameters
+                    surface -> Surface.
+                    x_scale -> Float. Multiplier to scale by horizontally.
+                    y_scale -> Float. Multiplier to scale by vertically.
+            rotate(angle) -> Rotates the image by degree specified.
+                Parameters
+                    angle -> 1-360.
+            flip(flip_hor, flip_ver) -> Flips the integer horizontally if flip_hor is true, or vertically if flip_ver
+                is true.
+                Parameters
+                    flip_hor -> Boolean. Whether to flip image horizontally.
+                    flip_ver -> Boolean. Whether to flip image vertically.
+            tint(input_surface, (r, g, b, a)) -> Surface. Tints input surface by specified amount and returns it.
+                Parameters
+                    input_surface -> Surface. Image to tint.
+                    (r, g, b, a) -> Color. Color to tint by.
+
+    resourceman.py
+        ResourceManager() -> Hold resources.
+
+        Properties
+            sprites -> Read-only. Dictionary.
+            sounds -> Read-only. Dictionary.
+            music -> Read-only. Dictionary.
+            fonts -> Read-only. Dictionary.
+        Methods
+            add_image(key, filename)
+                Parameters
+                    key -> Key.
+                    filename -> String.
+            remove_image(key)
+                Parameters
+                    key -> Key.
+            add_image_list(key, filenames)
+                Parameters
+                    key -> Key.
+                    filename -> List of strings.
+            add_spritesheet_image(key, spritesheet, rectangle, colorkey=None)
+                Parameters
+                    key -> Key.
+                    spritesheet -> Spritesheet.
+                    retangle -> Rect.
+                    colorkey -> Color.
+            add_spritesheet_image_list(key, spritesheet, rectangle_list, colorkey=None)
+                Parameters
+                    key -> Key.
+                    spritesheet -> Spritesheet.
+                    rectangle_list -> List of rects.
+                    colorkey -> Color.
+            add_spritesheet_strip(key, spritesheet, rect, image_count, colorkey=None)
+                Parameters
+                    key -> Key.
+                    spritesheet -> Spritesheet
+                    rect -> Rect.
+                    image_count -> Int.
+                    colorkey -> Color.
+            get_images(key)
+                Parameters
+                    key -> Key.
+            add_font(key, filename, size)
+                Parameters
+                    key -> Key.
+                    filename -> String.
+                    size -> Int.
+            remove_font(key)
+                Parameters
+                    key -> Key.
+
+    scene.py
+        Scene(scene_size) -> Holds GameObjects and corresponding coordinates and collision masks in the scene along with
+            views, and can manipulate and update each.
+
+        Parameters
+            scene_size -> Tuple. Height and width of scene.
+        Properties
+            coordinate_array -> Read-only. Dictionary. Holds GameObjects and uses tuples representing coordinates
+                as keys. (0, 0) is top left, scene_size defines bottom right.
+            collision_array -> Read-only. Dictionary. Holds collision rects for each GameObject in scene.
+            views -> Read-only. Dictionary. Holds views attached to scene.
+            view_rects -> Read-only. Dictionary. Holds the rect in the scene that each view sees.
+            view_draw_positions -> Read-write. Dictionary. Holds the position on the screen that each view is drawn
+            active -> Read-write. Boolean. Determines whether or not to update/draw scene.
+            scene_width -> Read-write. Integer. Horizontal size of the surface.
+            scene_height -> Read-write. Integer. Vertical size of the surface.
+        Methods
+            insert_view(surface, key, view_scene_position, view_draw_position=None, fill=None, masks=None,
+                view_size=None) -> Inserts view at view_scene_position in the scene
+                Parameters
+                    surface -> CoordinateSurface. Surface to be added to scene.
+                    key -> Key. Key to store view under in scene.
+                    view_scene_position -> Tuple. Coordinate position of top-left corner of view in scene.
+                    view_draw_position -> Tuple. Position to draw view at on screen.
+                    fill -> 3-Tuple. Defaults to transparent. Color to fill the surface with to clear it before drawing.
+                    masks -> List. List of masks to draw to surface. Searches through surface and only draws GameObjects
+                        with at least one of the specified masks during view update.
+                    view_size -> Tuple. Size of view in scene. Defaults to view's coordinate size.
+            remove_view(key) -> Deletes specified view.
+                Parameters
+                    key -> Key. Key of view to be deleted.
+            pan_view(key, increment) -> Pans specified view by increment.
+                Parameters
+                    key -> Key. Key of view to be panned.
+                    increment -> Tuple. Amount to pan view by.
+            move_view(key, coordinate) -> Moves top-left corner of specified view to coordinate.
+                Parameters
+                    key -> Key. Key of view to be moved.
+                    coordinate -> Tuple. Coordinate to move top-left corner of view to.
+            center_view_on_object(key, game_object) -> Centers specified view on game_object.
+                Parameters
+                    key -> Key. Key of view to be moved.
+                    game_object -> GameObject. Object to center view on.
+            insert_object(game_object, coordinate) -> Inserts game_object at coordinate.
+                Parameters
+                    game_object -> GameObject. Object to be inserted.
+                    coordinate -> Tuple. Coordinate to insert game_object at.
+            insert_object_centered(game_object, coordinate) -> Inserts game_object centered at coordinate.
+                Parameters
+                    game_object -> GameObject. Object to be inserted.
+                    coordinate -> Tuple. Coordinate to insert game_object centered at.
+            remove_object(game_object) -> Removes game_object from scene and any views it is drawn to. Returns true if
+                game_object in scene initially.
+                Parameters
+                    game_object -> GameObject. Object to be removed.
+            clear(key) -> Clears specified view of all objects and updates collisions.
+                Parameters
+                    key -> Key. Key of view to be cleared.
+            check_collision(coordinate, game_object=None) -> Boolean. Checks if there is a GameObject at coordinate in
+                surface if no game_object specified. If game_object specified, checks if game_object at coordinate.
+                Parameters
+                    coordinate -> Tuple. Position to check for object at.
+                    game_object -> GameObject. Specific object to remove, if any.
+            check_collision_objects(coordinate) -> List. Returns a list of objects at coordinate.
+                Parameters
+                    coordinate -> Tuple. Coordinate to return list of objects whose collision rects contain.
+            check_object_collision(game_object1, game_object2) -> Boolean. Checks if two objects collide.
+                Parameters
+                    game_object1 -> GameObject.
+                    game_object2 -> GameObject.
+            move_object(game_object, coordinate) -> Moves top-left corner of game_object to coordinate.
+                Parameters
+                    game_object -> GameObject. Object to be moved.
+                    coordinate -> Tuple. Coordinate to move object's top-left corner to.
+            increment_object(game_object, increment) -> Boolean. Moves game_object in scene by increment specified.
+                Return true if game_object in scene initially.
+                Parameters
+                    game_object -> GameObject. Object to be moved.
+                    increment -> Tuple. Amount to increment object by.
+            increment_object_radial(game_object, increment) -> Boolean. Moves game_object in scene in game_object's
+                current direction by increment. Returns true if game_object in scene initially.
+                Parameters
+                    game_object -> GameObject. Object to be moved.
+                    increment -> Float. Amount to increment object by.
+            check_position(game_object) -> Tuple. Checks for position of object in scene. Returns None if not
+                in scene.
+                Parameters
+                    game_object -> GameObject. Object to look for in scene.
+            update(fill=None, masks=None) -> Fills the specified surface with fill color and inserts all GameObjects in
+                scene that are visible and contain at least one of the specified masks (or all GameObjects if no masks
+                are specified) to their corresponding position on the specified surface and updates the surface.
+                Parameters
+                    fill -> 3-Tuple. Defaults to transparent. Color to fill the surface with to clear it before drawing.
+                    masks -> List. List of masks to draw to surface. Searches through scene and only draws GameObjects
+                        with at least one of the specified masks.
+            update_collisions() -> Updates the collision checking for the surface.
+            update_screen_coordinates(self, new_size) -> Adjusts scaling of specified view to new screen size.
+                Parameters
+                    new_size -> Tuple. New height and width to adjust to.
+
+    spritesheet.py
+        Spritesheet(filename) -> Loads a spritesheet from filename.
+
+        Parameters
+            filename -> String.
+        Properties
+            sheet -> Read-only. Image. Spritesheet loaded from file.
+        Methods
+            image_at(rectangle, colorkey=None) -> Image. Loads image at rectangle, and returns it using colorkey.
+                Parameters
+                    rectangle -> Rect. Rectangle defining section of sheet to load from.
+                    colorkey -> Color. Color to treat as transparent in image.
+            images_at(rectangle_list, colorkey=None) -> List. Runs image_at for each rectangle in rectangle_list,
+                returns list of images.
+                Parameters
+                    rectangle_list -> List. List of rectangles defining sections of sheet to load from.
+                    colorkey -> Color. Color to treat as transparent in images.
+            load_strip(rect, image_count, colorkey=None) -> List. Breaks rect up into a list of rects based on
+                image_count, runs images_at for each rect and returns list of images.
+                    rect -> Rect. Rectangle defining section of sheet to load images from.
+                    image_count -> Int. Number of images in rect.
+                    colorkey -> Color. Color to treat as transparent in images.
+
+    state.py
+        State() -> Blank state which can hold, clear, and update scenes.
+
+        Properties
+            scenes -> Read-only. Dictionary. Holds scenes.
+        Methods
+            add_scene(key, scene) -> Adds scene to dictionary.
+                Parameters
+                    key -> Key. Key to insert scene at.
+                    scene -> Scene. Scene to be inserted.
+            remove_scene(key) -> Scene to remove.
+                Parameters
+                    key -> Key. Key to remove scene at.
+            clear() -> Remove all scenes.
+            update() -> Update all scenes with their default update arguments.
+            update_collisions() -> Update collisions for all scenes.
