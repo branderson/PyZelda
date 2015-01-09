@@ -8,12 +8,12 @@ import random
 from pygame.locals import *
 
 # Screen constants
-SCREEN_WIDTH = 400
-SCREEN_HEIGHT = 320
-COORDINATE_WIDTH = 320
-COORDINATE_HEIGHT = 320
+SCREEN_WIDTH = 480
+SCREEN_HEIGHT = 432
+COORDINATE_WIDTH = 160
+COORDINATE_HEIGHT = 144
 # Clock constants
-TICKS_PER_SECOND = 5.
+TICKS_PER_SECOND = 60.
 MAX_FPS = 60
 USE_WAIT = True
 MAX_FRAME_SKIP = 5
@@ -28,45 +28,38 @@ GAME_MASK = ['game']
 
 
 def main():
-    global screen, game_state, game_surface, background_surface, gui_surface, resource_manager, clock, \
-        game_scene, current_width, start_pos, current_state, pause_state, pause_scene
+    global screen, game_state, game_surface, gui_surface, resource_manager, clock, \
+        game_scene, current_width, current_state, pause_state, pause_scene
     pygame.init()
 
     # Set up the window
-    states = []
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
     game_state = engine.State()
     pause_state = engine.State()
-    states.append(game_state)
-    game_surface = engine.CoordinateSurface(pygame.Rect((0, 0), (COORDINATE_WIDTH, COORDINATE_HEIGHT)),
-                                            (COORDINATE_WIDTH, COORDINATE_HEIGHT))
-    background_surface = engine.CoordinateSurface(pygame.Rect((0, 0), (COORDINATE_WIDTH, COORDINATE_HEIGHT)),
-                                                  (COORDINATE_WIDTH, COORDINATE_HEIGHT))
-    pause_surface = engine.CoordinateSurface(pygame.Rect((0, 0), (COORDINATE_WIDTH, COORDINATE_HEIGHT)),
+
+    game_surface = engine.CoordinateSurface((SCREEN_WIDTH, SCREEN_WIDTH), (COORDINATE_WIDTH, COORDINATE_HEIGHT))
+    pause_surface = engine.CoordinateSurface(pygame.Rect((0, 0), (SCREEN_WIDTH, SCREEN_HEIGHT)),
                                              (COORDINATE_WIDTH, COORDINATE_HEIGHT))
     gui_surface = engine.CoordinateSurface(pygame.Rect((0, 0), (SCREEN_WIDTH, SCREEN_HEIGHT)),
                                            (COORDINATE_WIDTH, COORDINATE_HEIGHT))
-    start_pos = (COORDINATE_WIDTH/2, COORDINATE_HEIGHT/2)
-    game_scene = engine.Scene((COORDINATE_WIDTH, COORDINATE_HEIGHT))
+    game_scene = engine.Scene((2560, 2480))
     pause_scene = engine.Scene((COORDINATE_WIDTH, COORDINATE_HEIGHT))
     game_state.add_scene('game', game_scene)
     pause_state.add_scene('pause', pause_scene)
     current_state = game_state
-    game_scene.insert_view(game_surface, 'game_view', (0, 0), (SCREEN_WIDTH/2-COORDINATE_WIDTH/2,
-                                                               SCREEN_HEIGHT/2-COORDINATE_HEIGHT/2), (0, 0, 0, 0))
-    pause_scene.insert_view(pause_surface, 'pause_view', (0, 0), (SCREEN_WIDTH/2-COORDINATE_WIDTH/2,
-                                                                  SCREEN_HEIGHT/2-COORDINATE_HEIGHT/2), (0, 0, 0, 0))
-    current_width = 800
+    game_scene.insert_view(game_surface, 'game_view', (0, 0), (0, 0), (0, 0, 0, 0))
+    pause_scene.insert_view(pause_surface, 'pause_view', (0, 0), (0, 0), (0, 0, 0, 0))
+    current_width = 480
 
     # Set up the clock
     clock = engine.GameClock(*CLOCK_SETTINGS)
 
     # Load the resources
+    link_sheet = engine.Spritesheet(RESOURCE_DIR + "LinkSheet6464192.png")
     resource_manager = engine.ResourceManager()
-    resource_manager.add_image('snake', RESOURCE_DIR + 'spr_SnakeNode_1.png')
-    resource_manager.add_image('target', RESOURCE_DIR + 'spr_Target_0.png')
-    resource_manager.add_image('grid', RESOURCE_DIR + 'bgr_grid.png')
-    resource_manager.add_image('pause', RESOURCE_DIR + '256.jpg')
+    resource_manager.add_image('worldmap', RESOURCE_DIR + 'OverworldFull.png')
+    resource_manager.add_spritesheet_image('link', link_sheet, ((46, 82), (13, 15)), (64, 64, 192))
+
     resource_manager.add_font('default', None, 86)
 
     while True:
@@ -75,31 +68,17 @@ def main():
 
 
 def run_game():
-    global sprite_group, game_ticks, snakes, target, can_move, direction, add_snake
-    sprite_group = pygame.sprite.Group()
+    global game_ticks, link, worldmap, can_move, direction
     game_ticks = 0
     can_move = False
-    add_snake = False
     direction = 0
 
-    snakes = [engine.GameObject(resource_manager.get_images('snake'), 0)]
-    target = engine.GameObject(resource_manager.get_images('target'), -10)
-    grid = engine.GameObject(resource_manager.get_images('grid'), -100)
-    pause = engine.GameObject(resource_manager.get_images('pause'), 1000)
+    link = engine.GameObject(resource_manager.get_images('link'), 0)
+    worldmap = engine.GameObject(resource_manager.get_images('worldmap'), -1000)
 
-    game_scene.insert_object(snakes[0], start_pos)
-    game_scene.insert_object(target, (0, 0))
-    pause_scene.insert_object_centered(pause, (COORDINATE_WIDTH/2, COORDINATE_HEIGHT/2))
+    game_scene.insert_object(link, (1000, 1000))
+    game_scene.insert_object(worldmap, (0, 0))
     current_state.update_collisions()
-    for x in xrange(0, COORDINATE_WIDTH/grid.rect.width):
-        for y in xrange(0, COORDINATE_HEIGHT/grid.rect.height):
-            background_surface.insert_object(engine.GameObject(resource_manager.get_images('grid'), -100),
-                                             (x*grid.rect.width, y*grid.rect.height))
-    background_surface.update()
-    # background_surface.blit(background_surface, (0, 0))
-    # background_surface.clear()
-    random.seed()
-    randomize_target()
 
     # Game loop
     while True:
@@ -139,57 +118,30 @@ def update_clock():
 
 
 def update_logic():
-    global add_snake, can_move
+    global can_move
     current_state.update_collisions()
     if current_state == game_state:
-        if game_scene.check_object_collision(snakes[0], target):
-            randomize_target()
-            add_snake = True
-        previous_position = game_scene.check_position(snakes[0])
         if direction == 2:
-            game_scene.increment_object(snakes[0], (-snakes[0].rect.width, 0))
+            game_scene.increment_object(link, (-link.rect.width, 0))
         elif direction == 0:
-            game_scene.increment_object(snakes[0], (snakes[0].rect.width, 0))
+            game_scene.increment_object(link, (link.rect.width, 0))
         elif direction == 3:
-            game_scene.increment_object(snakes[0], (0, snakes[0].rect.height))
+            game_scene.increment_object(link, (0, link.rect.height))
         elif direction == 1:
-            game_scene.increment_object(snakes[0], (0, -snakes[0].rect.height))
-        if game_scene.check_position(snakes[0])[0] > COORDINATE_WIDTH-1:
-            game_scene.move_object(snakes[0], (0, game_scene.check_position(snakes[0])[1]))
-        elif game_scene.check_position(snakes[0])[0] < 0:
-            game_scene.move_object(snakes[0], (COORDINATE_WIDTH-snakes[0].rect.width,
-                                               game_scene.check_position(snakes[0])[1]))
-        if game_scene.check_position(snakes[0])[1] > COORDINATE_HEIGHT-1:
-            game_scene.move_object(snakes[0], (game_scene.check_position(snakes[0])[0], 0))
-        elif game_scene.check_position(snakes[0])[1] < 0:
-            game_scene.move_object(snakes[0], (game_scene.check_position(snakes[0])[0],
-                                               COORDINATE_HEIGHT-snakes[0].rect.height))
+            game_scene.increment_object(link, (0, -link.rect.height))
 
-        if add_snake:
-            insert_snake()
-        for snake in snakes:
-            if snake != snakes[0]:
-                update_position = game_scene.check_position(snake)
-                game_scene.move_object(snake, previous_position)
-                previous_position = update_position
-        for snake1 in snakes:
-            for snake2 in snakes:
-                if snake1 != snake2 and game_scene.check_object_collision(snake1, snake2):
-                    terminate()
         can_move = True
+        game_scene.center_view_on_object('game_view', link)
 
 
 def draw_game():
     current_state.update()
-    # gui_surface.update((0, 0, 0, 0))
-    if current_state == game_state:
-        screen.blit(background_surface, (SCREEN_WIDTH/2-COORDINATE_WIDTH/2, SCREEN_HEIGHT/2-COORDINATE_HEIGHT/2))
     for scene_key in current_state.scenes.keys():  # Draws each scene in the current state to the screen
         if current_state.scenes[scene_key].active:
             for surface_key in current_state.scenes[scene_key].views.keys():
                 surface = current_state.scenes[scene_key].views[surface_key]
                 if surface.active:
-                    screen.blit(surface, current_state.scenes[scene_key].view_draw_positions[surface_key])
+                    screen.blit(surface.draw(), current_state.scenes[scene_key].view_draw_positions[surface_key])
     if current_state == pause_state:
         message = resource_manager.fonts['default'].render("PAUSE", True, (255, 255, 255, 255))
         screen.blit(message, (SCREEN_WIDTH/2-message.get_rect().width/2, SCREEN_HEIGHT/2-message.get_rect().height/2))
@@ -232,34 +184,5 @@ def terminate():
     sys.exit()
 
 
-def randomize_target():
-    target_x = int(random.uniform(0, COORDINATE_WIDTH/target.rect.width))
-    target_y = int(random.uniform(0, COORDINATE_HEIGHT/target.rect.height))
-    game_scene.move_object(target, (target_x*target.rect.width, target_y*target.rect.height))
-    for snake in snakes:
-        if game_scene.check_object_collision(snake, target):
-            randomize_target()
-
-
-def insert_snake():
-    global add_snake
-    snakes.append(engine.GameObject(resource_manager.get_images('snake'), 0))
-    snake = snakes[snakes.__len__() - 2]
-    if direction == 0:
-        game_scene.insert_object(snakes[snakes.__len__() - 1],
-                                 (game_scene.check_position(snake)[0]-snake.rect.width, game_scene.check_position(snake)[1]))
-    elif direction == 1:
-        game_scene.insert_object(snakes[snakes.__len__() - 1],
-                            (game_scene.check_position(snake)[0], game_scene.check_position(snake)[1]-snake.rect.height))
-    elif direction == 2:
-        game_scene.insert_object(snakes[snakes.__len__() - 1],
-                            (game_scene.check_position(snake)[0]+snake.rect.width, game_scene.check_position(snake)[1]))
-    elif direction == 3:
-        game_scene.insert_object(snakes[snakes.__len__() - 1],
-                            (game_scene.check_position(snake)[0], game_scene.check_position(snake)[1]+snake.rect.height))
-    add_snake = False
-
-
-main()
 if __name__ == '__main__':
     main()

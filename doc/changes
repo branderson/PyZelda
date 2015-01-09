@@ -1,3 +1,5 @@
+Jan. 9
+    Fixed drawing stage of engine, so that game objects don't scale, coordinate surfaces scale during blit
 Dec. 23
     Fixed states and other objects sharing properties between members of a class
     Worked on getting the documentation up to date.

@@ -7,6 +7,7 @@ import state
 import gameclock
 import gameobject
 import resourceman
+import spritesheet
 
 
 # Import engine level classes
@@ -16,3 +17,4 @@ from state import State
 from gameclock import GameClock
 from gameobject import GameObject
 from resourceman import ResourceManager
+from spritesheet import Spritesheet

@@ -190,10 +190,10 @@ class CoordinateSurface(pygame.Surface):
 
     # Deprecated
     def draw_object(self, game_object):
-        x = self.convert_to_screen_coordinates(self.check_position(game_object))[0]
-        y = self.convert_to_screen_coordinates(self.check_position(game_object))[1]
-        game_object.draw(self, self.x_scale, self.y_scale, x, y)
+        # x = self.convert_to_screen_coordinates(self.check_position(game_object))[0]
+        # y = self.convert_to_screen_coordinates(self.check_position(game_object))[1]
+        game_object.draw(self, (self.check_position(game_object)[0], self.check_position(game_object)[1]))
+        # , self.x_scale, self.y_scale, x, y)
 
     def draw(self):
-        for key in self.coordinate_array.keys():
-            pass
+        return pygame.transform.scale(self, (int(self.get_width()*self.x_scale), int(self.get_height()*self.y_scale)))
