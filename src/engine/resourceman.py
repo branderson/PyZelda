@@ -37,6 +37,11 @@ class ResourceManager(object):
     def add_spritesheet_strip(self, key, spritesheet, rect, image_count, colorkey=None):
         self.sprites[key] = spritesheet.load_strip(rect, image_count, colorkey)
 
+    def add_spritesheet_strip_offsets(self, key, spritesheet, topleft, image_count, per_line, image_size, hor_offset,
+                                      ver_offset, colorkey=None):
+        self.sprites[key] = spritesheet.load_strip_offsets(topleft, image_count, per_line, image_size, hor_offset,
+                                                           ver_offset, colorkey)
+
     def get_images(self, key):
         return self.sprites[key]
 

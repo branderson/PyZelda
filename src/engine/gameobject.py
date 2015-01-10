@@ -73,10 +73,13 @@ class GameObject(pygame.sprite.Sprite, object):
     def next_frame(self, direction=1):
         if direction == -1:
             self.animation_frame -= 1
+            if self.animation_frame < 0:
+                self.animation_frame = self.images[self.current_animation].__len__()-1
         else:
             self.animation_frame += 1
-
-        if self.animation_frame != 0 and self.animation_frame < self.images[self.current_animation].__len__():
+            if self.animation_frame > self.images[self.current_animation].__len__():
+                self.animation_frame = 0
+        if self.animation_frame < self.images[self.current_animation].__len__():
             self.image = self.images[self.current_animation][self.animation_frame]
             self.current_image = self.images[self.current_animation][self.animation_frame]
             self.rotate(0)

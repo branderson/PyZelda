@@ -44,13 +44,14 @@ class Scene(object):
         self.view_rects[key].topleft = coordinate
 
     def center_view_on_object(self, key, game_object):
+        current_view = self.view_rects[key]
         self.view_rects[key] = pygame.Rect((self.check_position(game_object)[0] -
-                                            self.view_rects[key].width/2 +
+                                            current_view.width/2 +
                                             game_object.rect.width/2,
                                             self.check_position(game_object)[1] -
-                                            self.view_rects[key].height/2 + game_object.rect.height/2),
-                                           (self.view_rects[key].width,
-                                            self.view_rects[key].height))
+                                            current_view.height/2 + game_object.rect.height/2),
+                                           (current_view.width,
+                                            current_view.height))
 
     def insert_object(self, game_object, coordinate):
         if coordinate[0] > self.scene_width or coordinate[1] > self.scene_height:
@@ -122,6 +123,19 @@ class Scene(object):
             return True
         else:
             return False
+
+    def check_contain_object(self, game_object1, game_object2):
+        """Checks whether game_object1 totally contains game_object2"""
+        if not self.collision_array[game_object1].collidepoint(self.collision_array[game_object2].topleft):
+            return False
+        if not self.collision_array[game_object1].collidepoint(self.collision_array[game_object2].topright):
+            return False
+        if not self.collision_array[game_object1].collidepoint(self.collision_array[game_object2].bottomleft):
+            return False
+        if not self.collision_array[game_object1].collidepoint(self.collision_array[game_object2].bottomright):
+            return False
+        else:
+            return True
 
     def move_object(self, game_object, coordinate):
         position = self.check_position(game_object)

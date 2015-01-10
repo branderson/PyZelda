@@ -31,3 +31,18 @@ class Spritesheet(object):
     def load_strip(self, rect, image_count, colorkey=None):
         rectangle_list = [(rect[0]+rect[2]*x, rect[1], rect[2], rect[3]) for x in range(image_count)]
         return self.images_at(rectangle_list, colorkey)
+
+    # Load a stip of images with offsets
+    def load_strip_offsets(self, topleft, image_count, per_line, image_size, hor_offset=0, ver_offset=0, colorkey=None):
+        rectangle_list = []
+        lines = int(image_count/per_line)
+        even_lines = True
+        if image_count % per_line != 0:
+            even_lines = False
+        current_topleft = topleft
+        for line in xrange(0, lines):
+            for image in xrange(0, per_line):
+                rectangle_list.append(pygame.Rect(current_topleft, (image_size[0], image_size[1])))
+                current_topleft = (current_topleft[0] + image_size[0] + hor_offset, current_topleft[1])
+            current_topleft = (topleft[0], current_topleft[1] + image_size[1] + ver_offset)
+        return self.images_at(rectangle_list, colorkey)
