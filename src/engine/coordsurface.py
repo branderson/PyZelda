@@ -181,7 +181,7 @@ class CoordinateSurface(pygame.Surface):
         self.unlock()
 
     def update_screen_coordinates(self, new_size):
-        pygame.Surface.__init__(self, new_size, flags=pygame.SRCALPHA | pygame.HWSURFACE)
+        pygame.Surface.__init__(self, new_size, flags=pygame.SRCALPHA)
         self.x_scale = float(self.get_width())/float(self.coordinate_width)
         self.y_scale = float(self.get_height())/float(self.coordinate_height)
 

@@ -8,8 +8,8 @@ import random
 from pygame.locals import *
 
 # Screen constants
-SCREEN_WIDTH = 640
-SCREEN_HEIGHT = 576
+SCREEN_WIDTH = 480
+SCREEN_HEIGHT = 432
 COORDINATE_WIDTH = 160
 COORDINATE_HEIGHT = 144
 # Clock constants
@@ -56,6 +56,7 @@ def main():
 
     # Load the resources
     link_sheet = engine.Spritesheet(RESOURCE_DIR + "LinkSheet6464192.png")
+    overworld_sheet = engine.Spritesheet(RESOURCE_DIR + "OverworldSheet.png")
     resource_manager = engine.ResourceManager()
     resource_manager.add_image('worldmap', RESOURCE_DIR + 'OverworldFull.png')
     resource_manager.add_spritesheet_image('link', link_sheet, ((45, 80), (16, 16)), (64, 64, 192))
@@ -63,6 +64,7 @@ def main():
     resource_manager.add_spritesheet_strip_offsets('link_walk_up', link_sheet, (66, 36), 2, 2, (14, 16), 0, 0, (64, 64, 192))
     resource_manager.add_spritesheet_strip_offsets('link_walk_left', link_sheet, (5, 36), 2, 2, (15, 16), 0, 0, (64, 64, 192))
     resource_manager.add_spritesheet_strip_offsets('link_walk_right', link_sheet, (95, 36), 2, 2, (15, 16), 0, 0, (64, 64, 192))
+    resource_manager.add_spritesheet_strip_offsets('overworld_tiles', overworld_sheet, (1, 1), 600, 24, (16, 16), 1, 1)
 
     resource_manager.add_font('default', None, 86)
 
@@ -73,12 +75,14 @@ def main():
 
 def run_game():
     global game_ticks, link, worldmap, camera, can_move, camera_increment, move_camera, camera_movement, direction, \
-        link_movement, room_movement, animation_counter
+        link_movement, room_movement, animation_counter, facing, previous_direction, step_counter
     game_ticks = 0
     can_move = True
     move_camera = False
     camera_increment = 0
     direction = 3
+    previous_direction = None
+    facing = 3
     camera_movement = {0: (COORDINATE_WIDTH/32, 0), 1: (0, -COORDINATE_HEIGHT/36),  # What the fuck???
                        2: (-COORDINATE_WIDTH/32, 0), 3: (0, COORDINATE_HEIGHT/32)}
     link_movement = {0: (1, 0), 1: (0, -1), 2: (-1, 0), 3: (0, 1)}
@@ -96,9 +100,20 @@ def run_game():
     link.add_animation('link_walk_left', resource_manager.get_images('link_walk_left'))
     link.set_animation('link_walk_down')
 
-    game_scene.insert_object(link, (256, 256))
-    game_scene.insert_object(worldmap, (0, 0))
-    game_scene.insert_object(camera, (300, 256))
+    # Build the world
+    world = open(RESOURCE_DIR + "worlds/overworld")
+    row = 0
+    for line in world:
+        column = 0
+        for tile in line.split():
+            game_scene.insert_object(engine.GameObject(resource_manager.get_images('overworld_tiles')[int(tile)],
+                                                       -1000), (16*column, 16*row))
+            column += 1
+        row += 1
+    world.close()
+
+    game_scene.insert_object_centered(link, (0, 0))
+    game_scene.insert_object_centered(camera, (0, 0))
     current_state.update_collisions()
 
     # Game loop
@@ -140,25 +155,22 @@ def update_clock():
 
 def update_logic():
     global can_move, camera_increment, move_camera, direction, camera_movement, link_movement, room_movement, \
-        animation_counter
+        animation_counter, previous_direction
     current_state.update_collisions()
     if current_state == game_state:
-        if move_camera:
-            can_move = False
-            if camera_increment > 0:
-                game_scene.increment_object(camera, camera_movement[direction])
-                game_scene.increment_object(link, room_movement[direction])
-                if direction == 1 or direction == 3:
-                    camera_increment -= COORDINATE_HEIGHT/32
-                else:
-                    camera_increment -= COORDINATE_WIDTH/32
-            else:
-                move_camera = False
-                can_move = True
         game_scene.center_view_on_object('game_view', camera)
         moved = False
         animation_counter += 1
         if can_move:
+            if not game_scene.check_contain_object(camera, link) and previous_direction != direction:
+                # Pause logic
+                if direction == 1 or direction == 3:
+                    camera_increment = COORDINATE_HEIGHT
+                else:
+                    camera_increment = COORDINATE_WIDTH
+                move_camera = True
+                can_move = False
+                return
             key = pygame.key.get_pressed()
             if key[K_a] and not key[K_d]:
                 direction = 2
@@ -179,17 +191,25 @@ def update_logic():
             if moved and animation_counter >= 4:
                 link.next_frame(1)
                 animation_counter = 0
-            if not game_scene.check_contain_object(camera, link):
-                # Pause logic
+                previous_direction = None
+        if move_camera:
+            if camera_increment > 0:
+                game_scene.increment_object(camera, camera_movement[direction])
+                game_scene.increment_object(link, room_movement[direction])
+                print(direction)
                 if direction == 1 or direction == 3:
-                    camera_increment = COORDINATE_HEIGHT
+                    camera_increment -= COORDINATE_HEIGHT/32
                 else:
-                    camera_increment = COORDINATE_WIDTH
-                move_camera = True
+                    camera_increment -= COORDINATE_WIDTH/32
+            else:
+                move_camera = False
+                can_move = True
+                previous_direction = direction
 
 
 def draw_game():
     current_state.update()
+    screen.fill((0, 0, 0, 0))
     for scene_key in current_state.scenes.keys():  # Draws each scene in the current state to the screen
         if current_state.scenes[scene_key].active:
             for surface_key in current_state.scenes[scene_key].views.keys():
@@ -204,17 +224,21 @@ def draw_game():
 
 
 def handle_event(event):
-    global can_move, current_state
+    global can_move, current_state, facing, screen
     # Quit the game
     if event.type == KEYDOWN:
         key = event.key
-        if key == K_w and direction != 1:
+        if key == K_w and facing != 1 and can_move:
+            facing = 1
             link.set_animation('link_walk_up', 0)
-        elif key == K_s and direction != 3:
+        elif key == K_s and facing != 3 and can_move:
+            facing = 3
             link.set_animation('link_walk_down', 0)
-        elif key == K_d and direction != 0:
+        elif key == K_d and facing != 0 and can_move:
+            facing = 0
             link.set_animation('link_walk_right', 0)
-        elif key == K_a and direction != 2:
+        elif key == K_a and facing != 2 and can_move:
+            facing = 2
             link.set_animation('link_walk_left', 0)
         if key == K_TAB:
             if current_state == game_state:
@@ -223,6 +247,12 @@ def handle_event(event):
                 current_state = game_state
         if key == K_ESCAPE:
             terminate()
+        if key == K_r:
+            game_scene.update_screen_coordinates('game_view', (640, 576))
+            screen = pygame.display.set_mode((640, 576))
+        if key == K_t:
+            game_scene.update_screen_coordinates('game_view', (480, 432))
+            screen = pygame.display.set_mode((480, 432))
         if key == K_f:
             pygame.display.toggle_fullscreen()
     return
