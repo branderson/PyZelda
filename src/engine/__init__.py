@@ -8,6 +8,7 @@ import gameclock
 import gameobject
 import resourceman
 import spritesheet
+import map
 
 
 # Import engine level classes
@@ -18,3 +19,4 @@ from gameclock import GameClock
 from gameobject import GameObject
 from resourceman import ResourceManager
 from spritesheet import Spritesheet
+from map import Map

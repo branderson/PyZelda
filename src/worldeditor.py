@@ -8,7 +8,7 @@ RESOURCE_DIR = '../resources/'
 
 
 def main():
-    global screen, world, application_surface, toolbox, buttons
+    global screen, world, application_surface, toolbox, worldview, worldscene, buttons, variables
     pygame.init()
 
     world = open(RESOURCE_DIR + "worlds/overworld")
@@ -18,10 +18,14 @@ def main():
     application_surface = pygame.Surface((1250, 480))
     toolbox = engine.CoordinateSurface((384, 480), (384, 480))
     toolbox.fill((255, 255, 255))
+    worldview = engine.CoordinateSurface((864, 480), (864, 480))
+    worldscene = engine.Scene((2560, 2480))
+    worldscene.insert_view(worldview, 'world', (0, 0), (385, 0), fill=(255, 0, 0, 255))
 
     overworld_sheet = engine.Spritesheet(RESOURCE_DIR + "OverworldSheet.png")
     resource_manager.add_spritesheet_strip_offsets('overworld_tiles', overworld_sheet, (1, 1), 600, 24, (16, 16), 1, 1)
     buttons = []
+    variables = {'selected': 0}
 
     for i in xrange(0, 25):
         for j in xrange(0, 24):
@@ -52,13 +56,15 @@ def handle_event(event):
             for button in buttons:
                 if pygame.Rect(toolbox.check_position(button), (button.rect.width,
                                                                 button.rect.height)).collidepoint(event.pos):
-                    print(button.value)
+                    variables['selected'] = button.value
 
 
 def draw():
-    global screen, application_surface, toolbox
+    global screen, application_surface, toolbox, worldview, worldscene
     toolbox.update()
+    worldscene.update('world', (255, 0, 0, 255))
     application_surface.blit(toolbox.draw(), (0, 0))
+    application_surface.blit(worldview.draw(), (385, 0))
     screen.blit(application_surface, (0, 0))
 
 
