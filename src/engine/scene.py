@@ -89,10 +89,10 @@ class Scene(object):
     def clear(self, key=0):
         # TODO: Make default value clear all views, also switch to view.clear()
         for coordinate in self.coordinate_array.keys():
-            for game_object in self.coordinate_array.keys():
-                if self.views[key].checkPosition(game_object) is not None:
-                    self.views[key].remove_object(game_object)
             del self.coordinate_array[coordinate]
+        for game_object in self.coordinate_array.keys():
+            if self.views[key].checkPosition(game_object) is not None:
+                self.views[key].remove_object(game_object)
         self.update_collisions()
 
     def check_collision(self, coordinate, game_object=None):
@@ -113,8 +113,16 @@ class Scene(object):
         """Returns a list of game objects at position"""
         object_list = []
         for game_object in self.collision_array:
-            if self.coordinate_array[game_object].collidepoint(coordinate):
+            if self.collision_array[game_object].collidepoint(coordinate):
                 object_list.append(game_object)
+        return object_list
+
+    def check_object_collision_objects(self, game_object):
+        """Returns a list of game objects that collide with object"""
+        object_list = []
+        for test_object in self.collision_array:
+            if self.collision_array[game_object].colliderect(self.collision_array[test_object]):
+                object_list.append(test_object)
         return object_list
 
     def check_object_collision(self, game_object1, game_object2):
@@ -139,7 +147,7 @@ class Scene(object):
             return True
 
     def move_object(self, game_object, coordinate):
-        position = self.check_position(game_object)
+        position = game_object.position
         if position is not None:
             if coordinate in self.coordinate_array:
                 self.coordinate_array[coordinate].append(game_object)
@@ -155,8 +163,8 @@ class Scene(object):
             return False
 
     def increment_object(self, game_object, increment):
-        return self.move_object(game_object, (self.check_position(game_object)[0] + increment[0],
-                                              self.check_position(game_object)[1] + increment[1]))
+        return self.move_object(game_object, (game_object.position[0] + increment[0],
+                                              game_object.position[1] + increment[1]))
 
     def increment_object_radial(self, game_object, increment):
         x_increment = math.cos(math.radians(game_object.angle))*increment
@@ -179,7 +187,7 @@ class Scene(object):
                 add_object = False
                 object_rect = pygame.Rect(self.check_position(game_object), (game_object.rect.width,
                                                                              game_object.rect.height))
-                self.collision_array[game_object] = object_rect
+                # self.collision_array[game_object] = object_rect
                 if self.view_rects[key].colliderect(object_rect) and game_object.visible:
                     if masks is None:
                         add_object = True
@@ -199,11 +207,14 @@ class Scene(object):
         for key in self.coordinate_array.keys():
             for game_object in self.coordinate_array[key]:
                 if game_object.handle_collisions:
-                    collide_rect = pygame.Rect((self.check_position(game_object)[0] + game_object.rect.width/2 -
-                                                game_object.collision_rect.width/2, self.check_position(game_object)[1] +
-                                                game_object.rect.height/2 - game_object.collision_rect.height/2),
-                                               (game_object.collision_rect.width,
-                                                game_object.collision_rect.height))
+                    # collide_rect = pygame.Rect((self.check_position(game_object)[0] + game_object.rect.width/2 -
+                    #                             game_object.collision_rect.width/2, self.check_position(game_object)[1] +
+                    #                             game_object.rect.height/2 - game_object.collision_rect.height/2),
+                    #                            (game_object.collision_rect.width,
+                    #                             game_object.collision_rect.height))
+                    collide_rect = pygame.Rect((game_object.position[0]+game_object.collision_rect.x,
+                                                game_object.position[1]+game_object.collision_rect.y),
+                                               (game_object.collision_rect.width, game_object.collision_rect.height))
                     self.collision_array[game_object] = collide_rect
 
     def update_screen_coordinates(self, key, new_size):

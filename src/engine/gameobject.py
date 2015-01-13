@@ -6,7 +6,7 @@ import math
 class GameObject(pygame.sprite.Sprite, object):
 
     def __init__(self, image=None, layer=0, masks=None, collision_rect=None, angle=0, position=(0, 0),
-                 handle_collisions=False):
+                 handle_collisions=False, object_type=None):
         pygame.sprite.Sprite.__init__(self)
         self.images = {}
         if image is None:
@@ -32,6 +32,7 @@ class GameObject(pygame.sprite.Sprite, object):
         self.angle = angle
         self.position = position
         self.handle_collisions = handle_collisions
+        self.object_type = object_type
         self.rotate(0)
         if masks is not None:
             for mask in masks:
