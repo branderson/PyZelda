@@ -55,7 +55,7 @@ class Map(object):
 
     def build_world(self, scene, view_rect=None):
         # This will be deprecated shortly
-        print("Starting build")
+        # print("Starting build")
         self.clear_collisions(scene)
         objects = 0
         tiles = 0
@@ -100,13 +100,13 @@ class Map(object):
                                                        handle_collisions=True, object_type=layer_name, visible=False),
                                             (object_rect[0], object_rect[1]))
                         objects += 1
-        print("Added " + str(tiles) + " tiles")
-        print("Added " + str(objects) + " objects")
-        print("Ending build")
+        # print("Added " + str(tiles) + " tiles")
+        # print("Added " + str(objects) + " objects")
+        # print("Ending build")
 
     @staticmethod
     def clear_tiles(scene, view_rect, kill_all=False):
-        print("Starting to clear tiles")
+        # print("Starting to clear tiles")
         # handle_all_collisions = scene.handle_all_collisions
         # scene.handle_all_collisions = True
         # scene.update_collisions()
@@ -128,17 +128,17 @@ class Map(object):
                         else:
                             game_object.visible = False
         scene.update_collisions()
-        print("Cleared " + str(objects) + " tiles")
-        print("Ending clear tiles")
+        # print("Cleared " + str(objects) + " tiles")
+        # print("Ending clear tiles")
 
     @staticmethod
     def clear_collisions(scene, kill_all=False):
-        print("Starting to clear objects")
+        # print("Starting to clear objects")
         objects = 0
         for coordinate in scene.coordinate_array.keys():
             for game_object in scene.coordinate_array[coordinate]:
                 if not game_object.persistent and game_object.object_type != "Map Tiles":
                     scene.remove_object(game_object)
                     objects += 1
-        print("Cleared " + str(objects) + " objects")
-        print("Ending clear objects")
+        # print("Cleared " + str(objects) + " objects")
+        # print("Ending clear objects")

@@ -41,6 +41,7 @@ class GameObject(pygame.sprite.Sprite, object):
         self.object_type = object_type
         self.persistent = persistent
         self.updated = True
+        self.updated_sprite = False
         # self.rotate(0)
         if masks is not None:
             for mask in masks:
@@ -61,6 +62,7 @@ class GameObject(pygame.sprite.Sprite, object):
 
     def change_image(self, key):
         self.updated = True
+        self.updated_sprite = True
         # self.image = self.images[key]
         self.current_image = self.images[key]
         self.current_key = key
@@ -77,6 +79,7 @@ class GameObject(pygame.sprite.Sprite, object):
 
     def set_animation_frame(self, frame):
         self.updated = True
+        self.updated_sprite = True
         # self.image = self.images[key][frame]
         self.animation_frame = frame
         # self.current_image = self.images[key][frame]
@@ -84,6 +87,7 @@ class GameObject(pygame.sprite.Sprite, object):
 
     def set_animation(self, key, starting_frame=0):
         self.updated = True
+        self.updated_sprite = True
         # self.image = self.images[key][starting_frame]
         self.animation_frame = 0
         self.current_animation = key
@@ -93,6 +97,7 @@ class GameObject(pygame.sprite.Sprite, object):
 
     def next_frame(self, direction=1):
         self.updated = True
+        self.updated_sprite = True
         if direction == -1:
             self.animation_frame -= 1
             if self.animation_frame < 0:
@@ -135,6 +140,7 @@ class GameObject(pygame.sprite.Sprite, object):
         except IndexError:
             print(str(self.animation_frame) + " " + str(len(self.images[self.current_key][key])))
         self.updated = False
+        self.updated_sprite = False
 
     def scale_to_view(self, scaling):
         self.updated = True

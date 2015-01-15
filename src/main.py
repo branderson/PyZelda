@@ -146,9 +146,6 @@ def update_clock():
         """Update function for use with GameClock."""
         global var, clock
 
-        # sprite_group.clear(screen)  # , eraser_image)
-        # sprite_group.update(USE_PREDICTION)
-        # handle_collisions()
         var['game_ticks'] += 1
         if var['game_ticks'] >= clock.ticks_per_second:
             # set_caption()
@@ -166,7 +163,8 @@ def update_logic():
         if var['clear_previous']:
             var['clear_previous'] = False
             game_map.clear_tiles(game_scene, game_scene.view_rects['game_view'], kill_all=True)
-            if not link.hopping:
+            # if not link.hopping:
+            if link.state != "hopping":
                 link.controllable = True
             game_scene.update_all = False
         if var['can_move']:
@@ -269,7 +267,6 @@ def update_room():
 
 def update_player():
     global var
-    # Make link not turn if new button pressed
 
     moved = False
 
@@ -312,34 +309,47 @@ def update_player():
         if moved:
             not_colliding = True
             link.direction_held = True
+            break_loop = False
+            hop_encountered = False
             for game_object in game_scene.check_object_collision_objects(link):
+                if break_loop:
+                    break
                 if game_object.object_type == "Regular Collisions":
-                    if not link.colliding:
-                        link.colliding = True
+                    if link.state != "colliding":
+                        link.state = "colliding"
                         link.change_animation = True
+                        # break_loop = True
+                    # hop_encountered = False
                     not_colliding = False
-                    game_scene.move_object(link, previous_position)
                 if game_object.object_type == "Jumps":
                     link.controllable = False
-                    link.hopping = True
+                    hop_encountered = True
+                    print("hop encountered")
+            if not_colliding:
+                if hop_encountered:
+                    link.state = "hopping"
+                    print(link.state)
                     link.animation_counter = 0
                     link.change_animation = True
-            if not_colliding:
-                if link.colliding:
-                    link.colliding = False
+                if link.state == "colliding":
+                    link.state = "walking"
+                    link.controllable = True
                     link.change_animation = True
+            else:
+                print(link.state)
+                link.controllable = True
+                game_scene.move_object(link, previous_position)
         if moved:
             link.update(True)
         else:
-            link.colliding = False
+            link.state = "walking"
             link.change_animation = True
     else:
-        if link.hopping:
-            link.controllable = False
+        if link.state == "hopping":
             moved = False
             for game_object in game_scene.check_object_collision_objects(link):
                 if game_object.object_type == "Regular Collisions" or game_object.object_type == "Jumps":
-                    game_scene.increment_object(link, (0, 1.5))
+                    game_scene.increment_object(link, (0, 1))
                     moved = True
             link.hop(moved)
 
