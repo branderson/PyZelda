@@ -1,3 +1,4 @@
 Weird bug with view going up going farther than view going down
 Screen still able to fly away because object not fully in view
 After loading new room, for one frame new room is drawn before it should be
+Massive slowdown between ending build and starting to clear tiles and then between starting and ending clearing tiles

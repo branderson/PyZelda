@@ -6,7 +6,7 @@ from coordsurface import CoordinateSurface
 
 
 class Scene(object):
-    def __init__(self, scene_size):
+    def __init__(self, scene_size, update_all=False, handle_all_collisions=False):
         self.coordinate_array = {}
         self.collision_array = {}
         self.views = {}
@@ -16,6 +16,8 @@ class Scene(object):
         self.active = True
         self.scene_width = scene_size[0]
         self.scene_height = scene_size[1]
+        self.update_all = update_all
+        self.handle_all_collisions = handle_all_collisions
 
     def insert_view(self, surface, key, view_scene_position, view_draw_position=None, fill=None, masks=None,
                     view_size=None):
@@ -54,6 +56,7 @@ class Scene(object):
                                             current_view.height))
 
     def insert_object(self, game_object, coordinate):
+        game_object.updated = True
         if coordinate[0] > self.scene_width or coordinate[1] > self.scene_height:
             return False
         if coordinate in self.coordinate_array:
@@ -61,7 +64,7 @@ class Scene(object):
         else:
             self.coordinate_array[coordinate] = [game_object]
         game_object.position = coordinate
-        self.update_collisions()
+        # self.update_collisions()
         return True
 
     def insert_object_centered(self, game_object, coordinate):
@@ -70,21 +73,25 @@ class Scene(object):
         self.insert_object(game_object, (adjusted_x, adjusted_y))
 
     def remove_object(self, game_object):
-        for key in self.coordinate_array.keys():
-            for view in self.views.keys():
-                if self.views[view].check_position(game_object) is not None:
-                    self.views[view].remove_object(game_object)
-            if self.coordinate_array[key].count(game_object) > 0:
-                self.coordinate_array[key].remove(game_object)
-                if self.coordinate_array[key].__len__() == 0:
-                    del self.coordinate_array[key]
-                try:
-                    game_object.delete()
-                except:
-                    pass
-                self.update_collisions()
-                return True
-        return False
+        self.coordinate_array[game_object.position].remove(game_object)
+        if len(self.coordinate_array[game_object.position]) == 0:
+            del self.coordinate_array[game_object.position]
+        game_object.destroy()
+        # for key in self.coordinate_array.keys():
+        #     # for view in self.views.keys():
+        #     #     if self.views[view].check_position(game_object) is not None:
+        #     #         self.views[view].remove_object(game_object)
+        #     if self.coordinate_array[key].count(game_object) > 0:
+        #         self.coordinate_array[key].remove(game_object)
+        #         if self.coordinate_array[key] == 0:
+        #             del self.coordinate_array[key]
+        #         try:
+        #             game_object.delete()
+        #         except:
+        #             pass
+        #         self.update_collisions()
+        #         return True
+        # return False
 
     def clear(self, key=0):
         # TODO: Make default value clear all views, also switch to view.clear()
@@ -147,15 +154,27 @@ class Scene(object):
             return True
 
     def move_object(self, game_object, coordinate):
+        game_object.updated = True
         position = game_object.position
+        handle_all_collisions = self.handle_all_collisions
+        self.handle_all_collisions = True
+        self.update_collisions()
+        self.handle_all_collisions = handle_all_collisions
+        for object_coordinate in self.coordinate_array.keys():
+            for other_object in self.coordinate_array[object_coordinate]:
+                moved_object_rect = pygame.Rect(position, (game_object.rect.width, game_object.rect.height))
+                if self.collision_array[other_object].colliderect(moved_object_rect):
+                    other_object.updated = True
         if position is not None:
             if coordinate in self.coordinate_array:
                 self.coordinate_array[coordinate].append(game_object)
             else:
                 self.coordinate_array[coordinate] = [game_object]
-            self.coordinate_array[position].remove(game_object)
             if len(self.coordinate_array[position]) == 0:
                 del self.coordinate_array[position]
+            self.coordinate_array[position].remove(game_object)
+            # for other_object in self.check_collision_objects(coordinate):
+            #     other_object.updated = True
             game_object.position = coordinate
             self.update_collisions()
             return True
@@ -171,7 +190,8 @@ class Scene(object):
         y_increment = math.sin(math.radians(game_object.angle))*increment
         return self.increment_object(game_object, (x_increment, y_increment))
 
-    def check_position(self, game_object):
+    @staticmethod
+    def check_position(game_object):
         # for key in self.coordinate_array.keys():
         #     if self.coordinate_array[key].count(game_object) > 0:
         #         return key
@@ -181,7 +201,7 @@ class Scene(object):
     def update(self, key=0, fill=None, masks=None):
         # TODO: Make default key update all views
         self.views[key].clear()
-        self.update_collisions()
+        # self.update_collisions()
         for coordinate in self.coordinate_array.keys():
             for game_object in self.coordinate_array[coordinate]:
                 add_object = False
@@ -196,6 +216,8 @@ class Scene(object):
                             if game_object.masks.count(mask) != 0:
                                 add_object = True
                     if add_object and self.views[key].active:
+                        if self.update_all:
+                            game_object.updated = True
                         self.views[key].insert_object(game_object, (self.check_position(game_object)[0] -
                                                                     self.view_rects[key].x,
                                                                     self.check_position(game_object)[1] -
@@ -206,7 +228,7 @@ class Scene(object):
         self.collision_array = {}
         for key in self.coordinate_array.keys():
             for game_object in self.coordinate_array[key]:
-                if game_object.handle_collisions:
+                if game_object.handle_collisions or self.handle_all_collisions:
                     # collide_rect = pygame.Rect((self.check_position(game_object)[0] + game_object.rect.width/2 -
                     #                             game_object.collision_rect.width/2, self.check_position(game_object)[1] +
                     #                             game_object.rect.height/2 - game_object.collision_rect.height/2),

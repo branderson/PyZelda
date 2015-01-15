@@ -6,34 +6,42 @@ import math
 class GameObject(pygame.sprite.Sprite, object):
 
     def __init__(self, image=None, layer=0, masks=None, collision_rect=None, angle=0, position=(0, 0),
-                 handle_collisions=False, object_type=None):
+                 handle_collisions=False, object_type=None, visible=True, persistent=False):
         pygame.sprite.Sprite.__init__(self)
         self.images = {}
+        self.images['image'] = {}
+        self.images['image'][0] = []
         if image is None:
-            self.image = pygame.Surface((0, 0))
+            self.images['image'][0].append(pygame.Surface((0, 0)))
         else:
-            self.image = image
+            self.images['image'][0].append(image)
         self.flipped_hor = False
         self.flipped_ver = False
-        self.visible = True
+        self.visible = visible
         self.current_animation = None
         self.animation_frame = 0
+        self.animation_speed = 15  # How many frames to wait between frames
+        self.animation_counter = 0
+        self.frame_ready = False
+        self.current_image = self.images['image']
+        self.current_key = 'image'
         if collision_rect is None:
-            collision_rect = self.image.get_rect()
-        self.rect = self.image.get_rect()
-        self.image_scaled = None
-        self.rect_scaled = self.image.get_rect()
-        self.collision_rect = collision_rect
-        self.rect_draw = self.image.get_rect()
+            self.collision_rect = self.images['image'][0][0].get_rect()
+        else:
+            self.collision_rect = collision_rect
+        self.rect = self.images['image'][0][0].get_rect()
+        # self.rect_scaled = self.rect.copy()
+        # self.rect_draw = self.images['image'].get_rect()
         self.layer = layer
         self.masks = []
-        self.images['image'] = self.image
-        self.current_image = self.images['image']
+        # self.images['image'] = self.image
         self.angle = angle
         self.position = position
         self.handle_collisions = handle_collisions
         self.object_type = object_type
-        self.rotate(0)
+        self.persistent = persistent
+        self.updated = True
+        # self.rotate(0)
         if masks is not None:
             for mask in masks:
                 self.add_mask(mask)
@@ -47,52 +55,63 @@ class GameObject(pygame.sprite.Sprite, object):
                 pass
 
     def add_image(self, key, surface):
-        self.images[key] = surface
+        self.images[key] = {}
+        self.images[key][0] = []
+        self.images[key][0].append(surface)
 
     def change_image(self, key):
-        self.image = self.images[key]
+        self.updated = True
+        # self.image = self.images[key]
         self.current_image = self.images[key]
-        self.rotate(0)
+        self.current_key = key
+        self.animation_frame = 0
+        # self.rotate(0)
 
     def remove_image(self, key):
         if key in self.images:
             del self.images[key]
 
     def add_animation(self, key, image_list):
-        self.images[key] = image_list
+        self.images[key] = {}
+        self.images[key][0] = image_list
 
-    def change_animation_frame(self, key, frame):
-        self.image = self.images[key][frame]
+    def set_animation_frame(self, frame):
+        self.updated = True
+        # self.image = self.images[key][frame]
         self.animation_frame = frame
-        self.current_image = self.images[key][frame]
-        self.rotate(0)
+        # self.current_image = self.images[key][frame]
+        # self.rotate(0)
 
     def set_animation(self, key, starting_frame=0):
-        self.image = self.images[key][starting_frame]
+        self.updated = True
+        # self.image = self.images[key][starting_frame]
         self.animation_frame = 0
         self.current_animation = key
-        self.current_image = self.images[key][starting_frame]
-        self.rotate(0)
+        # self.current_image = self.images[key][starting_frame]
+        self.current_key = key
+        # self.rotate(0)
 
     def next_frame(self, direction=1):
+        self.updated = True
         if direction == -1:
             self.animation_frame -= 1
             if self.animation_frame < 0:
-                self.animation_frame = self.images[self.current_animation].__len__()-1
+                # self.animation_frame = self.images[self.current_animation].__len__()-1
+                self.animation_frame = len(self.images[self.current_animation][0])-1
         else:
             self.animation_frame += 1
-            if self.animation_frame > self.images[self.current_animation].__len__():
+            if self.animation_frame > len(self.images[self.current_animation][0])-1:
                 self.animation_frame = 0
-        if self.animation_frame < self.images[self.current_animation].__len__():
-            self.image = self.images[self.current_animation][self.animation_frame]
-            self.current_image = self.images[self.current_animation][self.animation_frame]
-            self.rotate(0)
+        if self.animation_frame < len(self.images[self.current_animation][0]):
+            # self.image = self.images[self.current_animation][self.animation_frame]
+            # self.current_image = self.images[self.current_animation][self.animation_frame]
+            # self.rotate(0)
             return True
         else:
             return False
 
     def destroy(self):
-        self.__del__()
+        del self
         return True
 
     def width(self):
@@ -101,13 +120,34 @@ class GameObject(pygame.sprite.Sprite, object):
     def height(self):
         return self.rect.height
 
-    def draw(self, surface, position):   # , x_scale, y_scale, x, y):
+    def draw(self, surface, position, (x, y)):   # , x_scale, y_scale, x, y):
         # TODO: May need to change image to current_image. Also go through and make sure using right image consistently
         # rect_scaled = pygame.Rect((x-self.rect.x*x_scale, y-self.rect.y*y_scale), (int(self.rect.width*x_scale),
         #                                                                            int(self.rect.height*y_scale)))
         # surface.blit(pygame.transform.scale(self.image, (int(self.image.get_width()*x_scale),
         #                                                  int(self.image.get_height()*y_scale))), rect_scaled
-        surface.blit(self.image, (position[0], position[1], self.image.get_width(), self.image.get_height()))
+            # print("drawing " + self.object_type)
+        key = (surface.x_scale, surface.y_scale)
+        try:
+            surface.blit(self.images[self.current_key][key][self.animation_frame],
+                         (x, y, self.images[self.current_key][key][self.animation_frame].get_width(),
+                          self.images[self.current_key][key][self.animation_frame].get_height()))
+        except IndexError:
+            print(str(self.animation_frame) + " " + str(len(self.images[self.current_key][key])))
+        self.updated = False
+
+    def scale_to_view(self, scaling):
+        self.updated = True
+        # print("Scaling")
+        for image_list in self.images.keys():
+            self.images[image_list][scaling] = []
+            for image in xrange(0, len(self.images[image_list][0])):
+                self.images[image_list][scaling].append(pygame.transform.scale(self.images[image_list][0][image],
+                    (int(self.images[image_list][0][image].get_width()*scaling[0]),
+                     int(self.images[image_list][0][image].get_height()*scaling[1]))))
+                # self.images[image_list][0][image][scaling] = pygame.transform.scale(self.images[image_list][image],
+                #                                                                  (int(self.images[image_list][image].get_width()*scaling[0]),
+                #                                                                   int(self.images[image_list][image].get_height()*scaling[1])))
 
     # def scale(self, x_scale, y_scale):
     # TODO: Implement GameObject.scale()
@@ -174,3 +214,12 @@ class GameObject(pygame.sprite.Sprite, object):
                 surface.set_at((x, y), (new_r, new_g, new_b, new_a))
         surface.unlock()
         return surface
+
+    def update(self, can_update):
+        self.animation_counter += 1
+        if self.animation_counter >= self.animation_speed:
+            self.frame_ready = True
+        if self.frame_ready and can_update:
+            self.next_frame(1)
+            self.animation_counter = 0
+            self.frame_ready = False

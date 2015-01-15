@@ -33,3 +33,7 @@ Update the enginedocs
 Implement dirty rect animation
     May not be feasible due to abstraction of views/scrolling inherent to engine
 Look into possibly using cairo for final drawing
+Game
+    Make link still able to move while colliding
+        Will add a lot to the feel of the game
+        Move collision box for water one square down

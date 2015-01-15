@@ -64,6 +64,8 @@ def main():
     overworld_sheet = engine.Spritesheet(RESOURCE_DIR + "OverworldSheet.png")
     resource_manager = engine.ResourceManager()
     resource_manager.add_spritesheet_image('link', link_sheet, ((45, 80), (16, 16)), (64, 64, 192))
+
+    # Link's animations
     resource_manager.add_spritesheet_strip_offsets('link_walk_down', link_sheet, (37, 36), 2, 2, (14, 16), 0, 0, (64, 64, 192))
     resource_manager.add_spritesheet_strip_offsets('link_walk_up', link_sheet, (66, 36), 2, 2, (14, 16), 0, 0, (64, 64, 192))
     resource_manager.add_spritesheet_strip_offsets('link_walk_left', link_sheet, (5, 36), 2, 2, (15, 16), 0, 0, (64, 64, 192))
@@ -72,6 +74,12 @@ def main():
     resource_manager.add_spritesheet_strip_offsets('link_push_up', link_sheet, (88, 57), 2, 2, (17, 16), 0, 0, (64, 64, 192))
     resource_manager.add_spritesheet_strip_offsets('link_push_left', link_sheet, (21, 57), 2, 2, (16, 16), 0, 0, (64, 64, 192))
     resource_manager.add_spritesheet_strip_offsets('link_push_right', link_sheet, (122, 57), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+    resource_manager.add_spritesheet_strip_offsets('link_shield_walk_down', link_sheet, (131, 81), 2, 2, (17, 16), 0, 0, (64, 64, 192))
+    resource_manager.add_spritesheet_strip_offsets('link_shield_walk_up', link_sheet, (166, 81), 2, 2, (18, 16), 0, 0, (64, 64, 192))
+    resource_manager.add_spritesheet_strip_offsets('link_shield_walk_left', link_sheet, (97, 81), 2, 2, (16, 16), 0, 0, (64, 64, 192))  # These two might be messed up
+    resource_manager.add_spritesheet_strip_offsets('link_shield_walk_right', link_sheet, (204, 81), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+    resource_manager.add_spritesheet_strip_offsets('link_hop_down', link_sheet, (287, 132), 3, 3, (17, 16), 0, 0, (64, 64, 192))
+
     resource_manager.add_spritesheet_strip_offsets('overworld_tiles', overworld_sheet, (1, 1), 600, 24, (16, 16), 1, 1)
 
     resource_manager.add_font('gui_font_small', RESOURCE_DIR + "ReturnofGanon.ttf", 20)
@@ -97,17 +105,11 @@ def run_game():
 
     link = Link(resource_manager.get_images('link'), 0)
     camera = engine.GameObject(collision_rect=(pygame.Rect((0, 0), (COORDINATE_WIDTH, COORDINATE_HEIGHT))),
-                               handle_collisions=True, object_type="camera")
+                               handle_collisions=True, object_type="camera", persistent=True)
     camera.collision_rect.center = camera.rect.center
 
-    link.add_animation('link_walk_up', resource_manager.get_images('link_walk_up'))
-    link.add_animation('link_walk_down', resource_manager.get_images('link_walk_down'))
-    link.add_animation('link_walk_right', resource_manager.get_images('link_walk_right'))
-    link.add_animation('link_walk_left', resource_manager.get_images('link_walk_left'))
-    link.add_animation('link_push_up', resource_manager.get_images('link_push_up'))
-    link.add_animation('link_push_down', resource_manager.get_images('link_push_down'))
-    link.add_animation('link_push_left', resource_manager.get_images('link_push_left'))
-    link.add_animation('link_push_right', resource_manager.get_images('link_push_right'))
+    link.add_animations(resource_manager)
+
     link.set_animation('link_walk_down')
 
     game_scene.insert_object_centered(link, (80, 1984))
@@ -159,11 +161,14 @@ def update_logic():
     current_state.update_collisions()
     if current_state == game_state:
         game_scene.center_view_on_object('game_view', camera)
-        link.animation_counter += 1
+        link.update(0)
 
         if var['clear_previous']:
             var['clear_previous'] = False
-            game_map.clear_world(game_scene, game_scene.view_rects['game_view'])
+            game_map.clear_tiles(game_scene, game_scene.view_rects['game_view'], kill_all=True)
+            if not link.hopping:
+                link.controllable = True
+            game_scene.update_all = False
         if var['can_move']:
             update_room()
         if var['move_camera']:
@@ -182,7 +187,7 @@ def draw_game():
     if current_state == pause_state:
         message = resource_manager.fonts['default'].render("PAUSE", True, (255, 255, 255, 255))
         screen.blit(message, (SCREEN_WIDTH/2-message.get_rect().width/2, SCREEN_HEIGHT/2-message.get_rect().height/2))
-    draw_gui()
+    # draw_gui()
     screen.blit(gui_surface, (0, SCREEN_HEIGHT-(SCREEN_HEIGHT/COORDINATE_HEIGHT)*16))
     return
 
@@ -199,22 +204,26 @@ def draw_gui():
 
 
 def handle_event(event):
-    global current_state, screen, player_var, var
+    global current_state, screen, var
     # Quit the game
     if event.type == KEYDOWN:
         key = event.key
-        if key == K_w and link.facing != 1 and var['can_move']:
-            link.facing = 1
-            link.change_animation = True
-        elif key == K_s and link.facing != 3 and var['can_move']:
-            link.facing = 3
-            link.change_animation = True
-        elif key == K_d and link.facing != 0 and var['can_move']:
-            link.facing = 0
-            link.change_animation = True
-        elif key == K_a and link.facing != 2 and var['can_move']:
-            link.facing = 2
-            link.change_animation = True
+        if link.controllable:
+            # if key == K_w and link.facing != 1 and var['can_move']:
+            #     link.facing = 1
+            #     link.change_animation = True
+            # elif key == K_s and link.facing != 3 and var['can_move']:
+            #     link.facing = 3
+            #     link.change_animation = True
+            # elif key == K_d and link.facing != 0 and var['can_move']:
+            #     link.facing = 0
+            #     link.change_animation = True
+            # elif key == K_a and link.facing != 2 and var['can_move']:
+            #     link.facing = 2
+            #     link.change_animation = True
+            if key == K_g:
+                link.change_animation = True
+                link.shield = not link.shield
         if key == K_TAB:
             if current_state == game_state:
                 current_state = pause_state
@@ -235,6 +244,7 @@ def handle_event(event):
 
 def load_room():
     global var, game_scene, game_map
+    link.controllable = False
     if link.direction == 0:
         new_rect = game_scene.view_rects['game_view'].copy()
         new_rect[0] += var['camera_increment']
@@ -266,50 +276,72 @@ def update_player():
     # Move link if keys are pressed
     key = pygame.key.get_pressed()
     previous_position = link.position
-    if key[K_a] and not key[K_d]:
-        if not key[K_w] and not key[K_s] and link.facing != 2:
-            link.facing = 2
-            link.change_animation = True
-        link.direction = 2
-        game_scene.increment_object(link, link_movement[link.direction])
-        moved = True
-    elif key[K_d] and not key[K_a]:
-        if not key[K_w] and not key[K_s] and link.facing != 0:
-            link.facing = 0
-            link.change_animation = True
-        link.direction = 0
-        game_scene.increment_object(link, link_movement[link.direction])
-        moved = True
-    if key[K_s] and not key[K_w]:
-        if not key[K_d] and not key[K_a] and link.facing != 3:
-            link.facing = 3
-            link.change_animation = True
-        link.direction = 3
-        game_scene.increment_object(link, link_movement[link.direction])
-        moved = True
-    elif key[K_w] and not key[K_s]:
-        if not key[K_d] and not key[K_a] and link.facing != 1:
-            link.facing = 1
-            link.change_animation = True
-        link.direction = 1
-        game_scene.increment_object(link, link_movement[link.direction])
-        moved = True
-    if moved:
-        not_colliding = True
-        for game_object in game_scene.check_object_collision_objects(link):
-            if game_object.object_type == "Regular Collisions":
-                if not link.colliding:
-                    link.colliding = True
+    if link.controllable:
+        if not key[K_a] and not key[K_d] and not key[K_w] and not key[K_s]:
+            link.set_animation_frame(0)
+            link.direction_held = False
+        else:
+            if key[K_a] and not key[K_d]:
+                if not key[K_w] and not key[K_s] and link.facing != 2:
+                    link.facing = 2
                     link.change_animation = True
-                not_colliding = False
-                game_scene.move_object(link, previous_position)
-        if not_colliding:
-            if link.colliding:
-                link.colliding = False
-                link.change_animation = True
-    if moved and link.animation_counter >= 4:
-        link.next_frame(1)
-        link.animation_counter = 0
+                link.direction = 2
+                game_scene.increment_object(link, link_movement[link.direction])
+                moved = True
+            elif key[K_d] and not key[K_a]:
+                if not key[K_w] and not key[K_s] and link.facing != 0:
+                    link.facing = 0
+                    link.change_animation = True
+                link.direction = 0
+                game_scene.increment_object(link, link_movement[link.direction])
+                moved = True
+            if key[K_s] and not key[K_w]:
+                if not key[K_d] and not key[K_a] and link.facing != 3:
+                    link.facing = 3
+                    link.change_animation = True
+                link.direction = 3
+                game_scene.increment_object(link, link_movement[link.direction])
+                moved = True
+            elif key[K_w] and not key[K_s]:
+                if not key[K_d] and not key[K_a] and link.facing != 1:
+                    link.facing = 1
+                    link.change_animation = True
+                link.direction = 1
+                game_scene.increment_object(link, link_movement[link.direction])
+                moved = True
+        if moved:
+            not_colliding = True
+            link.direction_held = True
+            for game_object in game_scene.check_object_collision_objects(link):
+                if game_object.object_type == "Regular Collisions":
+                    if not link.colliding:
+                        link.colliding = True
+                        link.change_animation = True
+                    not_colliding = False
+                    game_scene.move_object(link, previous_position)
+                if game_object.object_type == "Jumps":
+                    link.controllable = False
+                    link.hopping = True
+                    link.animation_counter = 0
+                    link.change_animation = True
+            if not_colliding:
+                if link.colliding:
+                    link.colliding = False
+                    link.change_animation = True
+        if moved:
+            link.update(True)
+        else:
+            link.colliding = False
+            link.change_animation = True
+    else:
+        if link.hopping:
+            link.controllable = False
+            moved = False
+            for game_object in game_scene.check_object_collision_objects(link):
+                if game_object.object_type == "Regular Collisions" or game_object.object_type == "Jumps":
+                    game_scene.increment_object(link, (0, 1.5))
+                    moved = True
+            link.hop(moved)
 
     # Check for collision with edge of screen
     if camera.position[0] - link.position[0] > COORDINATE_WIDTH/2:
@@ -342,32 +374,12 @@ def update_player():
         return
 
     # Handle animations
-    if link.change_animation:  # Later if walking
-        if link.facing == 0:
-            if link.colliding:
-                link.set_animation('link_push_right', 0)
-            else:
-                link.set_animation('link_walk_right', 0)
-        elif link.facing == 1:
-            if link.colliding:
-                link.set_animation('link_push_up', 0)
-            else:
-                link.set_animation('link_walk_up', 0)
-        elif link.facing == 2:
-            if link.colliding:
-                link.set_animation('link_push_left', 0)
-            else:
-                link.set_animation('link_walk_left', 0)
-        elif link.facing == 3:
-            if link.colliding:
-                link.set_animation('link_push_down', 0)
-            else:
-                link.set_animation('link_walk_down', 0)
-        link.change_animation = False
+    link.handle_animations()
 
 
 def move_camera():
     if var['camera_increment'] > 0:
+        game_scene.update_all = True
         game_scene.increment_object(camera, camera_movement[link.direction])
         # print(str(camera_movement[player_var['direction']][1]))
         game_scene.increment_object(link, room_movement[link.direction])
