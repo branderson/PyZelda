@@ -40,10 +40,14 @@ class Map(object):
         for layer in root.findall("objectgroup"):
             rect_list = []
             for object_rect in layer.findall("object"):
-                rect_list.append(pygame.Rect(int(object_rect.get("x")),  # /self.tile_width,
-                                             int(object_rect.get("y")),  # /self.tile_height,
-                                             int(object_rect.get("width")),  # /self.tile_width,
-                                             int(object_rect.get("height"))))  # /self.tile_height))
+                try:
+                    rect_list.append(pygame.Rect(int(object_rect.get("x")),  # /self.tile_width,
+                                                 int(object_rect.get("y")),  # /self.tile_height,
+                                                 int(object_rect.get("width")),  # /self.tile_width,
+                                                 int(object_rect.get("height"))))  # /self.tile_height))
+                except TypeError:
+                    print("There was a problem loading object at " + str(int(object_rect.get("x"))/self.tile_width)
+                          + ", " + str(int(object_rect.get("y"))/self.tile_height))
             self.object_layers[layer.get("name")] = rect_list
 
     def get_tile_index(self, layer_name, x_tile, y_tile):
@@ -124,11 +128,11 @@ class Map(object):
                     if not object_rect.colliderect(view_rect):
                         if kill_all:
                             scene.remove_object(game_object)
-                            objects += 1
                         else:
                             game_object.visible = False
-        scene.update_collisions()
-        # print("Cleared " + str(objects) + " tiles")
+                    objects += 1
+        # scene.update_collisions()
+        # print("There were " + str(objects) + " tiles")
         # print("Ending clear tiles")
 
     @staticmethod
@@ -139,6 +143,6 @@ class Map(object):
             for game_object in scene.coordinate_array[coordinate]:
                 if not game_object.persistent and game_object.object_type != "Map Tiles":
                     scene.remove_object(game_object)
-                    objects += 1
-        # print("Cleared " + str(objects) + " objects")
+                objects += 1
+        # print("There were " + str(objects) + " objects")
         # print("Ending clear objects")

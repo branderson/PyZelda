@@ -89,7 +89,7 @@ class GameObject(pygame.sprite.Sprite, object):
         self.updated = True
         self.updated_sprite = True
         # self.image = self.images[key][starting_frame]
-        self.animation_frame = 0
+        self.animation_frame = starting_frame
         self.current_animation = key
         # self.current_image = self.images[key][starting_frame]
         self.current_key = key
@@ -222,10 +222,11 @@ class GameObject(pygame.sprite.Sprite, object):
         return surface
 
     def update(self, can_update):
-        self.animation_counter += 1
-        if self.animation_counter >= self.animation_speed:
-            self.frame_ready = True
-        if self.frame_ready and can_update:
-            self.next_frame(1)
-            self.animation_counter = 0
-            self.frame_ready = False
+        if self.animation_speed > 0:
+            self.animation_counter += 1
+            if self.animation_counter >= self.animation_speed:
+                self.frame_ready = True
+            if self.frame_ready and can_update:
+                self.next_frame(1)
+                self.animation_counter = 0
+                self.frame_ready = False

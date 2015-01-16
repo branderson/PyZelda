@@ -6,14 +6,15 @@ import pygame
 
 class Link(engine.GameObject):
     def __init__(self, image=None, layer=0):
-        engine.GameObject.__init__(self, image, layer, collision_rect=pygame.Rect((3, 3), (10, 12)),
+        engine.GameObject.__init__(self, image, layer, collision_rect=pygame.Rect((3, 4), (10, 12)),
                                    handle_collisions=True, object_type="player", persistent=True)
         self.direction = 3
         self.facing = 3
+        self.moves = []
         self.change_animation = False
-        # self.colliding = False
         self.shield = False
-        # self.hopping = False
+        self.left = None
+        self.right = None
         self.state = "walking"
         self.hop_frame = 0
         self.controllable = True
@@ -32,14 +33,19 @@ class Link(engine.GameObject):
         self.add_animation('link_shield_walk_down', resource_manager.get_images('link_shield_walk_down'))
         self.add_animation('link_shield_walk_right', resource_manager.get_images('link_shield_walk_right'))
         self.add_animation('link_shield_walk_left', resource_manager.get_images('link_shield_walk_left'))
+        self.add_animation('link_use_shield', resource_manager.get_images('link_use_shield'))
         self.add_animation('link_hop_down', resource_manager.get_images('link_hop_down'))
 
     def handle_animations(self):
         if self.change_animation:  # Later if walking
+            if self.state == "hopping":
+                self.set_animation('link_hop_down', 0)
             if self.facing == 0:
                 # if self.colliding:
                 if self.state == "colliding":
                     self.set_animation('link_push_right', 0)
+                elif self.state == "using_shield":
+                    self.set_animation('link_use_shield', 3)
                 elif self.state == "walking":
                     if self.shield:
                         self.set_animation('link_shield_walk_right', 0)
@@ -49,6 +55,8 @@ class Link(engine.GameObject):
                 # if self.colliding:
                 if self.state == "colliding":
                     self.set_animation('link_push_up', 0)
+                elif self.state == "using_shield":
+                    self.set_animation('link_use_shield', 2)
                 # elif self.shield:
                 elif self.state == "walking":
                     if self.shield:
@@ -59,18 +67,20 @@ class Link(engine.GameObject):
                 # if self.colliding:
                 if self.state == "colliding":
                     self.set_animation('link_push_left', 0)
+                elif self.state == "using_shield":
+                    self.set_animation('link_use_shield', 0)
                 elif self.state == "walking":
-                    if self.shield:
-                        self.set_animation('link_shield_walk_left', 0)
-                    else:
-                        self.set_animation('link_walk_left', 0)
+                    # if self.shield:
+                    #     self.set_animation('link_shield_walk_left', 0)
+                    # else:
+                    self.set_animation('link_walk_left', 0)
             elif self.facing == 3:
                 # if self.colliding:
                 if self.state == "colliding":
                     self.set_animation('link_push_down', 0)
+                elif self.state == "using_shield":
+                    self.set_animation('link_use_shield', 1)
                 # elif self.shield and not self.hopping:
-                elif self.state == "hopping":
-                    self.set_animation('link_hop_down', 0)
                 # else:
                 elif self.state == "walking":
                     if self.shield:
@@ -81,8 +91,13 @@ class Link(engine.GameObject):
             # Set animation speeds
             # if self.colliding:
             if self.state == "colliding":
-                self.animation_speed = 30
+                self.animation_speed = 15
+            elif self.state == "using_shield":
+                pygame.Rect((3, 4), (10, 12))
+                self.animation_speed = 0  # 0 means don't animate
             else:
+                if self.state == "walking":
+                    self.collision_rect = pygame.Rect((3, 4), (10, 12))
                 self.animation_speed = 15
 
             self.change_animation = False

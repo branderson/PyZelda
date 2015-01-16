@@ -3,7 +3,7 @@ __author__ = 'brad'
 import sys
 import pygame
 import engine
-import time
+# import time
 from link import Link
 
 from pygame.locals import *
@@ -11,29 +11,36 @@ from pygame.locals import *
 # Screen constants
 COORDINATE_WIDTH = 160
 COORDINATE_HEIGHT = 128
-SCREEN_MULTIPLIER = 3
+SCREEN_MULTIPLIER = 4
 SCREEN_WIDTH = COORDINATE_WIDTH*SCREEN_MULTIPLIER  # 640  # 480
 SCREEN_HEIGHT = (COORDINATE_HEIGHT+16)*SCREEN_MULTIPLIER  # 576  # 432
 # Clock constants
 TICKS_PER_SECOND = 60.
-MAX_FPS = 60
+MAX_FPS = 60  # 60
 USE_WAIT = True
 MAX_FRAME_SKIP = 5
 UPDATE_CALLBACK = None
 FRAME_CALLBACK = None
-CLOCK_SETTINGS = (TICKS_PER_SECOND, MAX_FPS, USE_WAIT, MAX_FRAME_SKIP, UPDATE_CALLBACK, FRAME_CALLBACK,
-                  lambda: time.time())
+CLOCK_SETTINGS = (TICKS_PER_SECOND, MAX_FPS, USE_WAIT, MAX_FRAME_SKIP, UPDATE_CALLBACK, FRAME_CALLBACK)
+                  # lambda: time.time())
 # lambda: pygame.time.get_ticks()/1000.)
 # Mask and string constants
 RESOURCE_DIR = '../resources/'
+SPRITE_DIR = RESOURCE_DIR + 'sprite/'
+SOUND_DIR = RESOURCE_DIR + 'sound/'
+MUSIC_DIR = RESOURCE_DIR + 'music/'
 GUI_MASK = ['gui']
 GAME_MASK = ['game']
+# Game Constants
+TRANSITION_SPEED = 2  # Roughly a 1.5
 
 
 def main():
     global screen, game_state, game_surface, gui_surface, resource_manager, clock, \
         game_scene, current_width, current_state, pause_state, pause_scene, game_map
+    pygame.mixer.pre_init(frequency=44100, size=-8)
     pygame.init()
+    pygame.register_quit(has_quit)
 
     # Set up the window
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -47,7 +54,7 @@ def main():
     gui_surface = engine.CoordinateSurface(pygame.Rect((0, 0), (SCREEN_WIDTH, (SCREEN_HEIGHT/COORDINATE_HEIGHT)*16)),
                                            (COORDINATE_WIDTH, 16))
 
-    game_scene = engine.Scene((2560, 2480))
+    game_scene = engine.Scene((2560, 2048))
     pause_scene = engine.Scene((COORDINATE_WIDTH, COORDINATE_HEIGHT))
     game_state.add_scene('game', game_scene)
     pause_state.add_scene('pause', pause_scene)
@@ -60,8 +67,8 @@ def main():
     clock = engine.GameClock(*CLOCK_SETTINGS)
 
     # Load the resources
-    link_sheet = engine.Spritesheet(RESOURCE_DIR + "LinkSheet6464192.png")
-    overworld_sheet = engine.Spritesheet(RESOURCE_DIR + "OverworldSheet.png")
+    link_sheet = engine.Spritesheet(SPRITE_DIR + "LinkSheet6464192.png")
+    overworld_sheet = engine.Spritesheet(SPRITE_DIR + "OverworldSheet.png")
     resource_manager = engine.ResourceManager()
     resource_manager.add_spritesheet_image('link', link_sheet, ((45, 80), (16, 16)), (64, 64, 192))
 
@@ -78,6 +85,7 @@ def main():
     resource_manager.add_spritesheet_strip_offsets('link_shield_walk_up', link_sheet, (166, 81), 2, 2, (18, 16), 0, 0, (64, 64, 192))
     resource_manager.add_spritesheet_strip_offsets('link_shield_walk_left', link_sheet, (97, 81), 2, 2, (16, 16), 0, 0, (64, 64, 192))  # These two might be messed up
     resource_manager.add_spritesheet_strip_offsets('link_shield_walk_right', link_sheet, (204, 81), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+    resource_manager.add_spritesheet_strip_offsets('link_use_shield', link_sheet, (26, 81), 4, 4, (17, 16), 0, 0, (64, 64, 192))  # Needs to be fixed
     resource_manager.add_spritesheet_strip_offsets('link_hop_down', link_sheet, (287, 132), 3, 3, (17, 16), 0, 0, (64, 64, 192))
 
     resource_manager.add_spritesheet_strip_offsets('overworld_tiles', overworld_sheet, (1, 1), 600, 24, (16, 16), 1, 1)
@@ -85,7 +93,16 @@ def main():
     resource_manager.add_font('gui_font_small', RESOURCE_DIR + "ReturnofGanon.ttf", 20)
     resource_manager.add_font('gui_font_large', RESOURCE_DIR + "ReturnofGanon.ttf", 46)
 
-    game_map = engine.Map(RESOURCE_DIR + 'worlds/grassworldtmx', RESOURCE_DIR + 'OverworldSheet.png')
+    # Music
+    # resource_manager.add_music('overworld', MUSIC_DIR + '10. Overworld.ogg')
+    # resource_manager.play_music('overworld')
+    resource_manager.play_music(MUSIC_DIR + '10. Overworld.ogg', 6.3)
+
+    # Sounds
+    resource_manager.add_sound('link_hop', SOUND_DIR + 'LA_Link_Jump.wav')
+    resource_manager.add_sound('link_shield', SOUND_DIR + 'LA_Shield.wav')
+
+    game_map = engine.Map(RESOURCE_DIR + 'worlds/grassworldtmx', SPRITE_DIR + 'OverworldSheet.png')
 
     while True:
         if not run_game():
@@ -94,14 +111,17 @@ def main():
 
 def run_game():
     global link, camera, camera_movement, \
-        link_movement, room_movement, var, game_map
+        link_movement, room_movement, var, game_map, force_exit
     var = {'game_ticks': 0, 'can_move': True, 'move_camera': False, 'camera_increment': 0,
            'clear_previous': False}
 
-    camera_movement = {0: (COORDINATE_WIDTH/32, 0), 1: (0, -COORDINATE_HEIGHT/32),  # What the fuck???
-                       2: (-COORDINATE_WIDTH/32, 0), 3: (0, COORDINATE_HEIGHT/32)}
+    force_exit = False
+
+    camera_movement = {0: (TRANSITION_SPEED*(COORDINATE_WIDTH/32), 0), 1: (0, -TRANSITION_SPEED*(COORDINATE_HEIGHT/32)),
+                       2: (-TRANSITION_SPEED*(COORDINATE_WIDTH/32), 0), 3: (0, TRANSITION_SPEED*(COORDINATE_HEIGHT/32))}
     link_movement = {0: (1, 0), 1: (0, -1), 2: (-1, 0), 3: (0, 1)}
-    room_movement = {0: (.5, 0), 1: (0, -.5), 2: (-.5, 0), 3: (0, .5)}
+    room_movement = {0: (TRANSITION_SPEED*.5, 0), 1: (0, -TRANSITION_SPEED*.5),
+                     2: (-TRANSITION_SPEED*.5, 0), 3: (0, TRANSITION_SPEED*.5)}
 
     link = Link(resource_manager.get_images('link'), 0)
     camera = engine.GameObject(collision_rect=(pygame.Rect((0, 0), (COORDINATE_WIDTH, COORDINATE_HEIGHT))),
@@ -120,6 +140,8 @@ def run_game():
 
     # Game loop
     while True:
+        if force_exit:
+            sys.exit()
         clock.tick()
         if clock.update_ready:
             update_clock()
@@ -135,8 +157,7 @@ def run_game():
         # Event handling
         for event in pygame.event.get():
             if event.type == QUIT:
-                pygame.quit()
-                sys.exit()
+                terminate()
             handle_event(event)
 
         pygame.display.set_caption("FPS: " + str(clock.fps))
@@ -185,13 +206,13 @@ def draw_game():
     if current_state == pause_state:
         message = resource_manager.fonts['default'].render("PAUSE", True, (255, 255, 255, 255))
         screen.blit(message, (SCREEN_WIDTH/2-message.get_rect().width/2, SCREEN_HEIGHT/2-message.get_rect().height/2))
-    # draw_gui()
+    draw_gui()
     screen.blit(gui_surface, (0, SCREEN_HEIGHT-(SCREEN_HEIGHT/COORDINATE_HEIGHT)*16))
     return
 
 
 def draw_gui():
-    gui_surface.fill((215, 160, 160, 255))
+    gui_surface.fill((255, 255, 139, 255))
     text_b = resource_manager.fonts['gui_font_small'].render("B", False, (0, 0, 0, 255))
     text_a = resource_manager.fonts['gui_font_small'].render("A", False, (0, 0, 0, 255))
     text_brackets = resource_manager.fonts['gui_font_large'].render("[    ]", False, (0, 0, 0, 255))
@@ -266,82 +287,104 @@ def update_room():
 
 
 def update_player():
-    global var
+    global var, resource_manager
 
     moved = False
+    action = False
 
     # Move link if keys are pressed
     key = pygame.key.get_pressed()
-    previous_position = link.position
     if link.controllable:
-        if not key[K_a] and not key[K_d] and not key[K_w] and not key[K_s]:
+        # If not holding a movement key
+        if key[K_b] and link.shield:
+            if link.state != "using_shield":
+                if link.state != "colliding":
+                    resource_manager.play_sound('link_shield')
+                link.state = "using_shield"
+                link.change_animation = True
+                # TODO Add second frame to shield animations and put animation_frame 0 here
+            action = True
+        if not key[K_a] and not key[K_d] and not key[K_w] and not key[K_s] and not key[K_b]:
             link.set_animation_frame(0)
-            link.direction_held = False
+            # link.direction_held = False
+        # If holding a movement key
         else:
             if key[K_a] and not key[K_d]:
                 if not key[K_w] and not key[K_s] and link.facing != 2:
                     link.facing = 2
                     link.change_animation = True
                 link.direction = 2
-                game_scene.increment_object(link, link_movement[link.direction])
+                link.moves.append(2)
+                # game_scene.increment_object(link, link_movement[link.direction])
                 moved = True
             elif key[K_d] and not key[K_a]:
                 if not key[K_w] and not key[K_s] and link.facing != 0:
                     link.facing = 0
                     link.change_animation = True
                 link.direction = 0
-                game_scene.increment_object(link, link_movement[link.direction])
+                link.moves.append(0)
+                # game_scene.increment_object(link, link_movement[link.direction])
                 moved = True
             if key[K_s] and not key[K_w]:
                 if not key[K_d] and not key[K_a] and link.facing != 3:
                     link.facing = 3
                     link.change_animation = True
                 link.direction = 3
-                game_scene.increment_object(link, link_movement[link.direction])
+                link.moves.append(3)
+                # game_scene.increment_object(link, link_movement[link.direction])
                 moved = True
             elif key[K_w] and not key[K_s]:
                 if not key[K_d] and not key[K_a] and link.facing != 1:
                     link.facing = 1
                     link.change_animation = True
                 link.direction = 1
-                game_scene.increment_object(link, link_movement[link.direction])
+                link.moves.append(1)
+                # game_scene.increment_object(link, link_movement[link.direction])
                 moved = True
+        # Execute all movement keys held and check for collisions in each direction
         if moved:
-            not_colliding = True
-            link.direction_held = True
             break_loop = False
-            hop_encountered = False
-            for game_object in game_scene.check_object_collision_objects(link):
-                if break_loop:
-                    break
-                if game_object.object_type == "Regular Collisions":
-                    if link.state != "colliding":
-                        link.state = "colliding"
-                        link.change_animation = True
-                        # break_loop = True
-                    # hop_encountered = False
-                    not_colliding = False
-                if game_object.object_type == "Jumps":
-                    link.controllable = False
-                    hop_encountered = True
-                    print("hop encountered")
-            if not_colliding:
+            not_colliding_any = True
+            for move_direction in link.moves:
+                if link.controllable:
+                    not_colliding_direction = True
+                    # link.direction_held = True
+                    hop_encountered = False
+                    previous_position = link.position
+                    game_scene.increment_object(link, link_movement[move_direction])
+                    for game_object in game_scene.check_object_collision_objects(link):
+                        if break_loop:
+                            break
+                        if game_object.object_type == "Regular Collisions":
+                            if link.state != "colliding":
+                                link.state = "colliding"
+                                link.change_animation = True
+                                break_loop = True
+                            # hop_encountered = False
+                            not_colliding_direction = False
+                            not_colliding_any = False
+                        if game_object.object_type == "Jumps":
+                            link.controllable = False
+                            hop_encountered = True
+                    if not not_colliding_direction:
+                        link.controllable = True
+                        game_scene.move_object(link, previous_position)
+            if not_colliding_any:
                 if hop_encountered:
+                    resource_manager.play_sound("link_hop")
                     link.state = "hopping"
-                    print(link.state)
                     link.animation_counter = 0
                     link.change_animation = True
                 if link.state == "colliding":
                     link.state = "walking"
                     link.controllable = True
                     link.change_animation = True
-            else:
-                print(link.state)
-                link.controllable = True
-                game_scene.move_object(link, previous_position)
+            link.moves = []
         if moved:
             link.update(True)
-        else:
+        elif action:
+            link.update(False)
+        elif link.state:
             link.state = "walking"
             link.change_animation = True
     else:
@@ -406,6 +449,12 @@ def move_camera():
 def terminate():
     pygame.quit()
     sys.exit()
+
+
+def has_quit():
+    global force_exit
+    force_exit = True
+    print("Pygame has quit, forcing exit")
 
 
 if __name__ == '__main__':
