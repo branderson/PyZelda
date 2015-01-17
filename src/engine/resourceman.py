@@ -3,7 +3,7 @@ import pygame
 # import pyglet.media
 
 class ResourceManager(object):
-    def __init__(self, force_pygame=False):
+    def __init__(self, force_pygame=False, muted=False):
         pygame.font.init()
         pygame.mixer.init()
         self.sprites = {}
@@ -11,6 +11,7 @@ class ResourceManager(object):
         self.sounds = {}
         self.fonts = {}
         self.force_pygame = True
+        self.muted = muted
 
     def add_image(self, key, filename):
         try:
@@ -54,16 +55,17 @@ class ResourceManager(object):
         del self.fonts[key]
 
     def add_music(self, key, filename):
-        if pyglet.media.have_avbin:
-            self.music[key] = pyglet.media.load(filename)
+        # if pyglet.media.have_avbin:
+        #     self.music[key] = pyglet.media.load(filename)
+        self.music[key] = filename
 
     def remove_music(self, key):
         del self.music[key]
 
-    @staticmethod
-    def play_music(filename, start=0):
-        pygame.mixer.music.load(filename)
-        # pygame.mixer.music.play(-1, start)
+    def play_music(self, key, start=0):
+        if not self.muted:
+            pygame.mixer.music.load(self.music[key])
+            pygame.mixer.music.play(-1, start)
         # pygame.mixer.music.set_pos(start)
         # if pyglet.media.have_avbin and not self.force_pygame:
         #     self.music[key].play()
@@ -78,4 +80,5 @@ class ResourceManager(object):
         del self.sounds[key]
 
     def play_sound(self, key):
-        self.sounds[key].play()
+        if not self.muted:
+            self.sounds[key].play()

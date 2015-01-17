@@ -12,6 +12,7 @@ class Map(object):
         """Takes an XML world file and a tile set and creates a map from it"""
         # Load the tile set
         self.resource_manager = ResourceManager()
+        self.object_tiles = {}
         self.tile_set = Spritesheet(tile_set)  # Could eventually allow for multiple tile sets by making a list
         self.resource_manager.add_spritesheet_strip_offsets('tile_set', self.tile_set, (1, 1), 600, 24, (16, 16), 1, 1)
 
@@ -22,6 +23,15 @@ class Map(object):
         self.height = int(root.get("height"))
         self.tile_width = int(root.get("tilewidth"))
         self.tile_height = int(root.get("tileheight"))
+
+        # Read in the special tiles
+        self.special_tiles = {}
+        for tileset in root.findall("tileset"):
+            for tile in tileset.findall("tile"):
+                tile_properties = {}
+                for tile_property in tile.find("properties").findall("property"):
+                    tile_properties[tile_property.get("name")] = tile_property.get("value")
+                self.special_tiles[int(tile.get("id"))] = tile_properties
 
         # Read in the layers
         self.layers = {}
@@ -49,6 +59,9 @@ class Map(object):
                     print("There was a problem loading object at " + str(int(object_rect.get("x"))/self.tile_width)
                           + ", " + str(int(object_rect.get("y"))/self.tile_height))
             self.object_layers[layer.get("name")] = rect_list
+            for layer_property in layer.findall("property"):
+                if layer_property.get("name") == "tile":
+                    self.object_tiles[layer.get("name")] = int(layer_property.get("value"))
 
     def get_tile_index(self, layer_name, x_tile, y_tile):
         index = self.width*y_tile+x_tile
@@ -60,7 +73,7 @@ class Map(object):
     def build_world(self, scene, view_rect=None):
         # This will be deprecated shortly
         # print("Starting build")
-        self.clear_collisions(scene)
+        # self.clear_collisions(scene)
         objects = 0
         tiles = 0
         if view_rect is None:
@@ -70,9 +83,21 @@ class Map(object):
                     for tile in xrange(0, self.width):
                         current_tile = self.get_tile_index(layer_name, tile, row)
                         if current_tile != -1:
-                            scene.insert_object(GameObject(self.resource_manager.get_images('tile_set')
-                                                           [current_tile], -1000, object_type=layer_name),
-                                                (16*tile, 16*row))
+                            is_special_tile = False
+                            for special_tile in self.special_tiles.keys():
+                                if current_tile == special_tile:
+                                    is_special_tile = True
+                            if is_special_tile:
+                                scene.insert_object(GameObject(self.resource_manager.get_images('tile_set')
+                                                               [current_tile], -1000, object_type=layer_name,
+                                                               properties=self.special_tiles[current_tile],
+                                                               tile_id=current_tile),
+                                                    (16*tile, 16*row))
+                            else:
+                                scene.insert_object(GameObject(self.resource_manager.get_images('tile_set')
+                                                               [current_tile], -1000, object_type=layer_name,
+                                                               tile_id=current_tile),
+                                                    (16*tile, 16*row))
                         # print(str(row) + " " + str(tile))
                     row += 1
         else:
@@ -88,10 +113,22 @@ class Map(object):
                     for tile in xrange(0, tile_rect[2]):
                         current_tile = self.get_tile_index(layer_name, tile_rect[0]+tile, tile_rect[1]+row)
                         if current_tile != -1:
-                            # Allow it to determine whether objects already exist and just make them visible if they do
-                            scene.insert_object(GameObject(self.resource_manager.get_images('tile_set')
-                                                           [current_tile], -1000, object_type=layer_name),
-                                                (16*(tile_rect[0]+tile), 16*(tile_rect[1]+row)))
+                            is_special_tile = False
+                            for special_tile in self.special_tiles.keys():
+                                if current_tile == special_tile:
+                                    is_special_tile = True
+                            if is_special_tile:
+                                scene.insert_object(GameObject(self.resource_manager.get_images('tile_set')
+                                                               [current_tile], -1000, object_type=layer_name,
+                                                               properties=self.special_tiles[current_tile],
+                                                               tile_id=current_tile),
+                                                    (16*(tile_rect[0]+tile), 16*(tile_rect[1]+row)))
+                            else:
+                                # Allow it to determine whether objects already exist and just make them visible if they do
+                                scene.insert_object(GameObject(self.resource_manager.get_images('tile_set')
+                                                               [current_tile], -1000, object_type=layer_name,
+                                                               tile_id=current_tile),
+                                                    (16*(tile_rect[0]+tile), 16*(tile_rect[1]+row)))
                             tiles += 1
                         # print(str(row) + " " + str(tile))
                     row += 1
@@ -108,13 +145,13 @@ class Map(object):
         # print("Added " + str(objects) + " objects")
         # print("Ending build")
 
-    @staticmethod
-    def clear_tiles(scene, view_rect, kill_all=False):
+    def clear_tiles(self, scene, view_rect, kill_all=False):
         # print("Starting to clear tiles")
         # handle_all_collisions = scene.handle_all_collisions
         # scene.handle_all_collisions = True
         # scene.update_collisions()
         # scene.handle_all_collisions = handle_all_collisions
+        self.clear_objects(scene, view_rect)
         objects = 0
         for coordinate in scene.coordinate_array.keys():
             for game_object in scene.coordinate_array[coordinate]:
@@ -135,14 +172,24 @@ class Map(object):
         # print("There were " + str(objects) + " tiles")
         # print("Ending clear tiles")
 
+    # @staticmethod
+    # def clear_collisions(scene, kill_all=False):
+    #     # print("Starting to clear objects")
+    #     objects = 0
+    #     for coordinate in scene.coordinate_array.keys():
+    #         for game_object in scene.coordinate_array[coordinate]:
+    #             if not game_object.persistent and game_object.object_type == "Regular Collisions":
+    #                 scene.remove_object(game_object)
+    #             objects += 1
+    #     # print("There were " + str(objects) + " objects")
+    #     # print("Ending clear objects")
+
     @staticmethod
-    def clear_collisions(scene, kill_all=False):
-        # print("Starting to clear objects")
-        objects = 0
+    def clear_objects(scene, view_rect):
         for coordinate in scene.coordinate_array.keys():
             for game_object in scene.coordinate_array[coordinate]:
                 if not game_object.persistent and game_object.object_type != "Map Tiles":
-                    scene.remove_object(game_object)
-                objects += 1
-        # print("There were " + str(objects) + " objects")
-        # print("Ending clear objects")
+                    object_rect = pygame.Rect(scene.check_position(game_object), (game_object.rect.width,
+                                                                                  game_object.rect.height))
+                    if not object_rect.colliderect(view_rect):
+                        scene.remove_object(game_object)

@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 __author__ = 'brad'
-import sys
+# import sys
 import pygame
 import engine
-# import time
+import specialtiles
 from link import Link
 
 from pygame.locals import *
@@ -37,7 +37,7 @@ TRANSITION_SPEED = 2  # Roughly a 1.5
 
 def main():
     global screen, game_state, game_surface, gui_surface, resource_manager, clock, \
-        game_scene, current_width, current_state, pause_state, pause_scene, game_map
+        game_scene, current_width, current_state, pause_state, pause_scene, game_map, overworld_sheet
     pygame.mixer.pre_init(frequency=44100, size=-8)
     pygame.init()
     pygame.register_quit(has_quit)
@@ -94,9 +94,9 @@ def main():
     resource_manager.add_font('gui_font_large', RESOURCE_DIR + "ReturnofGanon.ttf", 46)
 
     # Music
-    # resource_manager.add_music('overworld', MUSIC_DIR + '10. Overworld.ogg')
-    # resource_manager.play_music('overworld')
-    resource_manager.play_music(MUSIC_DIR + '10. Overworld.ogg', 6.3)
+    resource_manager.add_music('overworld', MUSIC_DIR + '10. Overworld.ogg')
+    resource_manager.play_music('overworld', 6.3)
+    # resource_manager.play_music(MUSIC_DIR + '10. Overworld.ogg', 6.3)
 
     # Sounds
     resource_manager.add_sound('link_hop', SOUND_DIR + 'LA_Link_Jump.wav')
@@ -106,7 +106,10 @@ def main():
 
     while True:
         if not run_game():
+            print("Back in main, breaking and quiting pygame")
             break
+    pygame.quit()
+    # Locks up here
 
 
 def run_game():
@@ -137,11 +140,13 @@ def run_game():
     current_state.update_collisions()
     game_scene.center_view_on_object('game_view', camera)
     game_map.build_world(game_scene, game_scene.view_rects['game_view'])
+    build_world()
 
     # Game loop
     while True:
         if force_exit:
-            sys.exit()
+            print("Exit has been forced, ending run_game")
+            return False
         clock.tick()
         if clock.update_ready:
             update_clock()
@@ -280,6 +285,30 @@ def load_room():
         new_rect = game_scene.view_rects['game_view'].copy()
         new_rect[1] += var['camera_increment']
         game_map.build_world(game_scene, new_rect)
+    build_world()
+
+
+def build_world():
+    global game_map
+    for coordinate in game_scene.coordinate_array.keys():
+        for game_object in game_scene.coordinate_array[coordinate]:
+            # if game_object.object_type == "Short Grass":
+            #     game_scene.remove_object(game_object)
+                # game_scene.insert_object(specialtiles.ShortGrass(game_map.resource_manager),
+                #                          coordinate)
+            # if game_object.object_type == "Map Tiles":
+            for object_property in game_object.properties.keys():
+                # if object_property == "object_type":
+                    # Build special objects
+                    # object_type = game_object.properties[object_property]
+                    # if object_type == "big_beach_grass":
+                    #     game_scene.remove_object(game_object)
+                        # game_scene.insert_object(specialtiles.BigBeachGrass(game_map.resource_manager), coordinate)
+                    # if object_type == "half_post":
+                    #     game_object.collision_rect = pygame.Rect((8, 0), (8, 16))
+                if object_property == "collision_rect":
+                    crect_list = map(int, game_object.properties[object_property].split(','))
+                    game_object.collision_rect = pygame.Rect(crect_list)
 
 
 def update_room():
@@ -345,17 +374,17 @@ def update_player():
         if moved:
             break_loop = False
             not_colliding_any = True
+            hop_encountered = False
             for move_direction in link.moves:
                 if link.controllable:
                     not_colliding_direction = True
                     # link.direction_held = True
-                    hop_encountered = False
                     previous_position = link.position
                     game_scene.increment_object(link, link_movement[move_direction])
                     for game_object in game_scene.check_object_collision_objects(link):
                         if break_loop:
                             break
-                        if game_object.object_type == "Regular Collisions":
+                        if game_object.solid:
                             if link.state != "colliding":
                                 link.state = "colliding"
                                 link.change_animation = True
@@ -391,7 +420,7 @@ def update_player():
         if link.state == "hopping":
             moved = False
             for game_object in game_scene.check_object_collision_objects(link):
-                if game_object.object_type == "Regular Collisions" or game_object.object_type == "Jumps":
+                if game_object.solid or game_object.object_type == "Jumps":
                     game_scene.increment_object(link, (0, 1))
                     moved = True
             link.hop(moved)
@@ -447,15 +476,19 @@ def move_camera():
 
 
 def terminate():
-    pygame.quit()
-    sys.exit()
+    global force_exit
+    force_exit = True
+    print("Forcing exit from run_game")
+    # pygame.quit()
+    # sys.exit()
 
 
 def has_quit():
-    global force_exit
-    force_exit = True
-    print("Pygame has quit, forcing exit")
+    print("Pygame has quit")
 
 
 if __name__ == '__main__':
     main()
+    print("Exited main")
+
+print("We're at the very end of execution")

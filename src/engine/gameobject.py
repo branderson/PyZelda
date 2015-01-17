@@ -6,7 +6,8 @@ import math
 class GameObject(pygame.sprite.Sprite, object):
 
     def __init__(self, image=None, layer=0, masks=None, collision_rect=None, angle=0, position=(0, 0),
-                 handle_collisions=False, object_type=None, visible=True, persistent=False):
+                 handle_collisions=False, object_type=None, properties=None, visible=True, persistent=False,
+                 tile_id = None):
         pygame.sprite.Sprite.__init__(self)
         self.images = {}
         self.images['image'] = {}
@@ -42,6 +43,19 @@ class GameObject(pygame.sprite.Sprite, object):
         self.persistent = persistent
         self.updated = True
         self.updated_sprite = False
+        self.solid = False
+        if properties is None:
+            self.properties = {}
+        else:
+            self.properties = properties
+            for object_property in properties.keys():
+                if object_property == "solid":
+                    # if properties[property] == "True":
+                    self.solid = True
+                    self.handle_collisions = True
+                if object_property == "object_type":
+                    self.object_type = properties[object_property]
+        self.tile_id = tile_id
         # self.rotate(0)
         if masks is not None:
             for mask in masks:
