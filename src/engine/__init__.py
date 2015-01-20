@@ -9,6 +9,7 @@ import gameobject
 import resourceman
 import spritesheet
 import map
+import soundstream
 
 
 # Import engine level classes
@@ -20,3 +21,4 @@ from gameobject import GameObject
 from resourceman import ResourceManager
 from spritesheet import Spritesheet
 from map import Map
+from soundstream import SoundStream

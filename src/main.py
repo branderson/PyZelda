@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 __author__ = 'brad'
-# import sys
+import sys
 import pygame
 import engine
 import specialtiles
@@ -16,7 +16,7 @@ SCREEN_WIDTH = COORDINATE_WIDTH*SCREEN_MULTIPLIER  # 640  # 480
 SCREEN_HEIGHT = (COORDINATE_HEIGHT+16)*SCREEN_MULTIPLIER  # 576  # 432
 # Clock constants
 TICKS_PER_SECOND = 60.
-MAX_FPS = 60  # 60
+MAX_FPS = 0  # 60
 USE_WAIT = True
 MAX_FRAME_SKIP = 5
 UPDATE_CALLBACK = None
@@ -28,7 +28,8 @@ CLOCK_SETTINGS = (TICKS_PER_SECOND, MAX_FPS, USE_WAIT, MAX_FRAME_SKIP, UPDATE_CA
 RESOURCE_DIR = '../resources/'
 SPRITE_DIR = RESOURCE_DIR + 'sprite/'
 SOUND_DIR = RESOURCE_DIR + 'sound/'
-MUSIC_DIR = RESOURCE_DIR + 'music/'
+MUSIC_DIR = RESOURCE_DIR + 'music/wav/'
+EXTENSION = '.wav'
 GUI_MASK = ['gui']
 GAME_MASK = ['game']
 # Game Constants
@@ -38,7 +39,7 @@ TRANSITION_SPEED = 2  # Roughly a 1.5
 def main():
     global screen, game_state, game_surface, gui_surface, resource_manager, clock, \
         game_scene, current_width, current_state, pause_state, pause_scene, game_map, overworld_sheet
-    pygame.mixer.pre_init(frequency=44100, size=-8)
+    # pygame.mixer.pre_init(frequency=44100, size=-8)
     pygame.init()
     pygame.register_quit(has_quit)
 
@@ -94,7 +95,9 @@ def main():
     resource_manager.add_font('gui_font_large', RESOURCE_DIR + "ReturnofGanon.ttf", 46)
 
     # Music
-    resource_manager.add_music('overworld', MUSIC_DIR + '10. Overworld.ogg')
+    resource_manager.add_music('overworld', MUSIC_DIR + '10. Overworld' + EXTENSION)
+    resource_manager.add_music('mabe_village', MUSIC_DIR + '11. Mabe Village' + EXTENSION)
+    resource_manager.add_music('mysterious_forest', MUSIC_DIR + '16. Mysterious Forest' + EXTENSION)
     resource_manager.play_music('overworld', 6.3)
     # resource_manager.play_music(MUSIC_DIR + '10. Overworld.ogg', 6.3)
 
@@ -108,7 +111,7 @@ def main():
         if not run_game():
             print("Back in main, breaking and quiting pygame")
             break
-    pygame.quit()
+    # pygame.quit()
     # Locks up here
 
 
@@ -151,6 +154,7 @@ def run_game():
         if clock.update_ready:
             update_clock()
             update_logic()
+            resource_manager.update_sound()
 
         if clock.frame_ready:
             # Draw functions
@@ -248,6 +252,8 @@ def handle_event(event):
             if key == K_g:
                 link.change_animation = True
                 link.shield = not link.shield
+            if key == K_n:
+                link.no_clip = not link.no_clip
         if key == K_TAB:
             if current_state == game_state:
                 current_state = pause_state
@@ -306,9 +312,17 @@ def build_world():
                         # game_scene.insert_object(specialtiles.BigBeachGrass(game_map.resource_manager), coordinate)
                     # if object_type == "half_post":
                     #     game_object.collision_rect = pygame.Rect((8, 0), (8, 16))
-                if object_property == "collision_rect":
-                    crect_list = map(int, game_object.properties[object_property].split(','))
-                    game_object.collision_rect = pygame.Rect(crect_list)
+                # if object_property == "collision_rect":
+                #     crect_list = map(int, game_object.properties[object_property].split(','))
+                #     game_object.collision_rect = pygame.Rect(crect_list)
+                pass
+
+
+def test_music_change():
+    for game_object in game_scene.check_object_collision_objects(link):
+        if game_object.object_type == "music_zone":
+            if resource_manager.current_key != game_object.properties["song"]:
+                resource_manager.play_music(game_object.properties["song"])
 
 
 def update_room():
@@ -384,7 +398,7 @@ def update_player():
                     for game_object in game_scene.check_object_collision_objects(link):
                         if break_loop:
                             break
-                        if game_object.solid:
+                        if game_object.solid and not link.no_clip:
                             if link.state != "colliding":
                                 link.state = "colliding"
                                 link.change_animation = True
@@ -473,6 +487,7 @@ def move_camera():
         var['move_camera'] = False
         var['can_move'] = True
         var['clear_previous'] = True
+        test_music_change()
 
 
 def terminate():
@@ -487,8 +502,11 @@ def has_quit():
     print("Pygame has quit")
 
 
-if __name__ == '__main__':
-    main()
-    print("Exited main")
+# if __name__ == '__main__':
+#     main()
+#     print("Exited main")
+main()
+print("Exited main")
 
 print("We're at the very end of execution")
+sys.exit()

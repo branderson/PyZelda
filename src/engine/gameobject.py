@@ -55,6 +55,10 @@ class GameObject(pygame.sprite.Sprite, object):
                     self.handle_collisions = True
                 if object_property == "object_type":
                     self.object_type = properties[object_property]
+                if object_property == "collision_rect":
+                    if object_property == "collision_rect":
+                        crect_list = map(int, self.properties[object_property].split(','))
+                        self.collision_rect = pygame.Rect(crect_list)
         self.tile_id = tile_id
         # self.rotate(0)
         if masks is not None:

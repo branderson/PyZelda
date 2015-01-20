@@ -13,6 +13,7 @@ class Map(object):
         # Load the tile set
         self.resource_manager = ResourceManager()
         self.object_tiles = {}
+        self.object_properties = {}
         self.tile_set = Spritesheet(tile_set)  # Could eventually allow for multiple tile sets by making a list
         self.resource_manager.add_spritesheet_strip_offsets('tile_set', self.tile_set, (1, 1), 600, 24, (16, 16), 1, 1)
 
@@ -49,15 +50,23 @@ class Map(object):
 
         for layer in root.findall("objectgroup"):
             rect_list = []
+            rect_index = ""
             for object_rect in layer.findall("object"):
                 try:
-                    rect_list.append(pygame.Rect(int(object_rect.get("x")),  # /self.tile_width,
-                                                 int(object_rect.get("y")),  # /self.tile_height,
-                                                 int(object_rect.get("width")),  # /self.tile_width,
-                                                 int(object_rect.get("height"))))  # /self.tile_height))
+                    current_rect =pygame.Rect(int(object_rect.get("x")),  # /self.tile_width,
+                                              int(object_rect.get("y")),  # /self.tile_height,
+                                              int(object_rect.get("width")),  # /self.tile_width,
+                                              int(object_rect.get("height")))  # /self.tile_height))
+                    rect_list.append(current_rect)
+                    rect_index = str(current_rect[0]) + " " + str(current_rect[1]) + " " + str(current_rect[2]) + " " + str(current_rect[3])
                 except TypeError:
                     print("There was a problem loading object at " + str(int(object_rect.get("x"))/self.tile_width)
                           + ", " + str(int(object_rect.get("y"))/self.tile_height))
+                current_properties = {}
+                if object_rect.find("properties") is not None:
+                    for object_property in object_rect.find("properties").findall("property"):
+                        current_properties[object_property.get("name")] = object_property.get("value")
+                self.object_properties[rect_index] = current_properties
             self.object_layers[layer.get("name")] = rect_list
             for layer_property in layer.findall("property"):
                 if layer_property.get("name") == "tile":
@@ -137,8 +146,10 @@ class Map(object):
             for layer_name in self.object_layers.keys():
                 for object_rect in self.object_layers[layer_name]:
                     if object_rect.colliderect(view_rect):  # tile_rect):
+                        rect_index = str(object_rect[0]) + " " + str(object_rect[1]) + " " + str(object_rect[2]) + " " + str(object_rect[3])
                         scene.insert_object(GameObject(collision_rect=pygame.Rect(0, 0, object_rect[2], object_rect[3]),
-                                                       handle_collisions=True, object_type=layer_name, visible=False),
+                                                       handle_collisions=True, object_type=layer_name, visible=False,
+                                                       properties=self.object_properties[rect_index]),
                                             (object_rect[0], object_rect[1]))
                         objects += 1
         # print("Added " + str(tiles) + " tiles")

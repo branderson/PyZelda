@@ -1,17 +1,21 @@
 __author__ = 'brad'
 import pygame
 # import pyglet.media
+from soundstream import SoundStream
+
 
 class ResourceManager(object):
-    def __init__(self, force_pygame=False, muted=False):
+    def __init__(self, force_pygame=True, force_pyaudio=True, muted=False):
         pygame.font.init()
         pygame.mixer.init()
         self.sprites = {}
         self.music = {}
         self.sounds = {}
         self.fonts = {}
-        self.force_pygame = True
+        self.force_pygame = force_pygame
+        self.force_pyaudio = force_pyaudio
         self.muted = muted
+        self.current_key = None
 
     def add_image(self, key, filename):
         try:
@@ -55,17 +59,28 @@ class ResourceManager(object):
         del self.fonts[key]
 
     def add_music(self, key, filename):
-        # if pyglet.media.have_avbin:
+        # if pyglet.media.have_avbin and not self.force_pygame:
         #     self.music[key] = pyglet.media.load(filename)
-        self.music[key] = filename
+        if self.force_pyaudio:
+            self.music[key] = SoundStream(filename)
+        else:
+            self.music[key] = filename
 
     def remove_music(self, key):
         del self.music[key]
 
     def play_music(self, key, start=0):
         if not self.muted:
-            pygame.mixer.music.load(self.music[key])
-            pygame.mixer.music.play(-1, start)
+            # if pyglet.media.have_avbin and not self.force_pygame:
+            #     self.music[key].play()
+            if self.force_pyaudio:
+                if self.current_key is not None:
+                    self.music[self.current_key].stop()
+                self.music[key].play()
+                self.current_key = key
+            else:
+                pygame.mixer.music.load(self.music[key])
+                pygame.mixer.music.play(-1, start)
         # pygame.mixer.music.set_pos(start)
         # if pyglet.media.have_avbin and not self.force_pygame:
         #     self.music[key].play()
@@ -73,8 +88,11 @@ class ResourceManager(object):
     def add_sound(self, key, filename):
         # if pyglet.media.have_avbin and not self.force_pygame:
         #     self.sounds[key] = pyglet.media.load(filename, streaming=False)
+        # if self.force_pyaudio:
+        #     self.sounds[key] = SoundStream(filename)
         # else:
         self.sounds[key] = pygame.mixer.Sound(filename)
+        # pass
 
     def remove_sound(self, key):
         del self.sounds[key]
@@ -82,3 +100,11 @@ class ResourceManager(object):
     def play_sound(self, key):
         if not self.muted:
             self.sounds[key].play()
+            # pass
+
+    def update_sound(self):
+        if self.current_key is not None:
+            if self.force_pyaudio:
+                self.music[self.current_key].update()
+            else:
+                pass

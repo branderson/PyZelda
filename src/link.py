@@ -6,7 +6,7 @@ import pygame
 
 class Link(engine.GameObject):
     def __init__(self, image=None, layer=0):
-        engine.GameObject.__init__(self, image, layer, collision_rect=pygame.Rect((3, 4), (10, 12)),
+        engine.GameObject.__init__(self, image, layer,  collision_rect=pygame.Rect((3, 4), (10, 11)),
                                    handle_collisions=True, object_type="player", persistent=True)
         self.direction = 3
         self.facing = 3
@@ -18,6 +18,7 @@ class Link(engine.GameObject):
         self.state = "walking"
         self.hop_frame = 0
         self.controllable = True
+        self.no_clip = False
         self.direction_held = False
 
     def add_animations(self, resource_manager):
@@ -97,7 +98,7 @@ class Link(engine.GameObject):
                 self.animation_speed = 0  # 0 means don't animate
             else:
                 if self.state == "walking":
-                    self.collision_rect = pygame.Rect((3, 4), (10, 12))
+                    self.collision_rect = pygame.Rect((3, 4), (10, 11))
                 self.animation_speed = 15
 
             self.change_animation = False
