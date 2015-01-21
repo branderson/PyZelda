@@ -2,10 +2,20 @@ __author__ = 'brad'
 
 import engine
 
+RESOURCE_DIR = '../resources/'
+SPRITE_DIR = RESOURCE_DIR + 'sprite/'
 
-class ShortGrass(engine.GameObject):
+
+class AbstractTile(engine.GameObject):
+    def __init__(self):
+        self.resource_manager = engine.ResourceManager()
+        self.tile_sheet = engine.Spritesheet(SPRITE_DIR + "OverworldSheet.png")
+
+
+class ShortGrass(AbstractTile):
     def __init__(self, resource_manager):
-        engine.GameObject.__init__(self, resource_manager.get_images('tile_set')[229],
+        AbstractTile.__init__(self)
+        engine.GameObject.__init__(self, self.resource_manager.get_images('tile_set')[229],
                                    layer=-500, handle_collisions=True, object_type="short_grass")
 
 

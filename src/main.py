@@ -4,6 +4,7 @@ import sys
 import pygame
 import engine
 import specialtiles
+import effects
 from link import Link
 
 from pygame.locals import *
@@ -16,7 +17,7 @@ SCREEN_WIDTH = COORDINATE_WIDTH*SCREEN_MULTIPLIER  # 640  # 480
 SCREEN_HEIGHT = (COORDINATE_HEIGHT+16)*SCREEN_MULTIPLIER  # 576  # 432
 # Clock constants
 TICKS_PER_SECOND = 60.
-MAX_FPS = 0  # 60
+MAX_FPS = 60  # 60
 USE_WAIT = True
 MAX_FRAME_SKIP = 5
 UPDATE_CALLBACK = None
@@ -119,7 +120,8 @@ def run_game():
     global link, camera, camera_movement, \
         link_movement, room_movement, var, game_map, force_exit
     var = {'game_ticks': 0, 'can_move': True, 'move_camera': False, 'camera_increment': 0,
-           'clear_previous': False}
+           'clear_previous': False, 'current_frame': 0, 'animation_frames': 0, 'camera_position': (1, 11),
+           'short_grass_drawn': False}
 
     force_exit = False
 
@@ -138,8 +140,10 @@ def run_game():
 
     link.set_animation('link_walk_down')
 
-    game_scene.insert_object_centered(link, (80, 1984))
-    game_scene.insert_object_centered(camera, (80, 1984))
+    game_scene.insert_object_centered(link, (80+COORDINATE_WIDTH*var['camera_position'][0],
+                                             64+COORDINATE_HEIGHT*var['camera_position'][1]))
+    game_scene.insert_object_centered(camera, (80+COORDINATE_WIDTH*var['camera_position'][0],
+                                               64+COORDINATE_HEIGHT*var['camera_position'][1]))
     current_state.update_collisions()
     game_scene.center_view_on_object('game_view', camera)
     game_map.build_world(game_scene, game_scene.view_rects['game_view'])
@@ -278,19 +282,19 @@ def load_room():
     if link.direction == 0:
         new_rect = game_scene.view_rects['game_view'].copy()
         new_rect[0] += var['camera_increment']
-        game_map.build_world(game_scene, new_rect)
+        game_map.build_world(game_scene, new_rect, current_frame=var['current_frame'])
     if link.direction == 1:
         new_rect = game_scene.view_rects['game_view'].copy()
         new_rect[1] -= var['camera_increment']
-        game_map.build_world(game_scene, new_rect)
+        game_map.build_world(game_scene, new_rect, current_frame=var['current_frame'])
     if link.direction == 2:
         new_rect = game_scene.view_rects['game_view'].copy()
         new_rect[0] -= var['camera_increment']
-        game_map.build_world(game_scene, new_rect)
+        game_map.build_world(game_scene, new_rect, current_frame=var['current_frame'])
     if link.direction == 3:
         new_rect = game_scene.view_rects['game_view'].copy()
         new_rect[1] += var['camera_increment']
-        game_map.build_world(game_scene, new_rect)
+        game_map.build_world(game_scene, new_rect, current_frame=var['current_frame'])
     build_world()
 
 
@@ -327,6 +331,7 @@ def test_music_change():
 
 def update_room():
     update_player()
+    update_animated_tiles()
 
 
 def update_player():
@@ -389,6 +394,7 @@ def update_player():
             break_loop = False
             not_colliding_any = True
             hop_encountered = False
+            on_short_grass = False
             for move_direction in link.moves:
                 if link.controllable:
                     not_colliding_direction = True
@@ -409,9 +415,25 @@ def update_player():
                         if game_object.object_type == "Jumps":
                             link.controllable = False
                             hop_encountered = True
+                        if game_object.object_type == "short_grass":
+                            if not var['short_grass_drawn']:
+                                game_scene.insert_object(effects.ShortGrass(), (link.position[0], link.position[1]+1))
+                                var['short_grass_drawn'] = True
+                            on_short_grass = True
                     if not not_colliding_direction:
                         link.controllable = True
                         game_scene.move_object(link, previous_position)
+            if on_short_grass:
+                for coordinate in game_scene.coordinate_array.keys():
+                    for game_object in game_scene.coordinate_array[coordinate]:
+                        if game_object.object_type == "effect_short_grass":
+                            game_scene.move_object(game_object, (link.position[0], link.position[1]+1))
+            else:
+                for coordinate in game_scene.coordinate_array.keys():
+                    for game_object in game_scene.coordinate_array[coordinate]:
+                        if game_object.object_type == "effect_short_grass":
+                            game_scene.remove_object(game_object)
+                var['short_grass_drawn'] = False
             if not_colliding_any:
                 if hop_encountered:
                     resource_manager.play_sound("link_hop")
@@ -471,6 +493,22 @@ def update_player():
 
     # Handle animations
     link.handle_animations()
+
+
+def update_animated_tiles():
+    global game_scene, var
+    # if var['animation_frames'] >= 15:
+    #     var['animation_frames'] = 0
+    #     var['current_frame'] += 1
+    # if var['current_frame'] > 3:
+    #     var['current_frame'] = 0
+    # var['animation_frames'] += 1
+    for coordinate in game_scene.coordinate_array.keys():
+        for game_object in game_scene.coordinate_array[coordinate]:
+            if game_object.animate:
+                game_object.update()
+                if var['current_frame'] != game_object.animation_frame:
+                    var['current_frame'] = game_object.animation_frame
 
 
 def move_camera():

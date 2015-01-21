@@ -79,7 +79,7 @@ class Map(object):
         except IndexError:
             return 0
 
-    def build_world(self, scene, view_rect=None):
+    def build_world(self, scene, view_rect=None, current_frame=0):
         # This will be deprecated shortly
         # print("Starting build")
         # self.clear_collisions(scene)
@@ -127,11 +127,27 @@ class Map(object):
                                 if current_tile == special_tile:
                                     is_special_tile = True
                             if is_special_tile:
-                                scene.insert_object(GameObject(self.resource_manager.get_images('tile_set')
-                                                               [current_tile], -1000, object_type=layer_name,
-                                                               properties=self.special_tiles[current_tile],
-                                                               tile_id=current_tile),
-                                                    (16*(tile_rect[0]+tile), 16*(tile_rect[1]+row)))
+                                animated = False
+                                frames = 0
+                                for object_property in self.special_tiles[current_tile].keys():
+                                    if object_property == "animate":
+                                        animated = True
+                                        frames = int(self.special_tiles[current_tile][object_property])
+                                if animated:
+                                    images = []
+                                    for x in xrange(current_tile, current_tile + frames):
+                                        images.append(self.resource_manager.get_images('tile_set')[x])
+                                    scene.insert_object(GameObject(images, -1000, object_type=layer_name,
+                                                                   properties=self.special_tiles[current_tile],
+                                                                   tile_id=current_tile, animate=True,
+                                                                   current_frame=current_frame),
+                                                        (16*(tile_rect[0]+tile), 16*(tile_rect[1]+row)))
+                                else:
+                                    scene.insert_object(GameObject(self.resource_manager.get_images('tile_set')
+                                                                   [current_tile], -1000, object_type=layer_name,
+                                                                   properties=self.special_tiles[current_tile],
+                                                                   tile_id=current_tile),
+                                                        (16*(tile_rect[0]+tile), 16*(tile_rect[1]+row)))
                             else:
                                 # Allow it to determine whether objects already exist and just make them visible if they do
                                 scene.insert_object(GameObject(self.resource_manager.get_images('tile_set')

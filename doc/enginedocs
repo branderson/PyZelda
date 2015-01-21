@@ -180,7 +180,7 @@ Engine Documentation
                 Parameters
                     key -> Key. Key to insert surface at.
                     surface -> Surface. Surface to add to images.
-            change_image(key) -> Changes current_image to image specified by key.
+            set_image(key) -> Changes current_image to image specified by key.
                 Parameters
                     key -> Key.
             remove_image(key) -> Removes image specified by key from images.

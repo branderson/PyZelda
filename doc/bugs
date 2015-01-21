@@ -5,3 +5,4 @@ Massive slowdown between ending build and starting to clear tiles and then betwe
 Link keeps shield out after passing through transition
 Link can get trapped between two rooms
 Objects from map file can't have properties
+Current frame isn't working

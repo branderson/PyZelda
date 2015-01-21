@@ -7,7 +7,7 @@ class GameObject(pygame.sprite.Sprite, object):
 
     def __init__(self, image=None, layer=0, masks=None, collision_rect=None, angle=0, position=(0, 0),
                  handle_collisions=False, object_type=None, properties=None, visible=True, persistent=False,
-                 tile_id = None):
+                 tile_id=None, animate=False, animation_speed=15, current_frame=0):
         pygame.sprite.Sprite.__init__(self)
         self.images = {}
         self.images['image'] = {}
@@ -15,13 +15,18 @@ class GameObject(pygame.sprite.Sprite, object):
         if image is None:
             self.images['image'][0].append(pygame.Surface((0, 0)))
         else:
-            self.images['image'][0].append(image)
+            try:
+                len(image)
+                self.images['image'][0] = image
+            except TypeError:
+                self.images['image'][0] = [image]
         self.flipped_hor = False
         self.flipped_ver = False
         self.visible = visible
-        self.current_animation = None
-        self.animation_frame = 0
-        self.animation_speed = 15  # How many frames to wait between frames
+        self.current_animation = 'image'
+        self.animate = animate
+        self.animation_frame = current_frame
+        self.animation_speed = animation_speed  # How many frames to wait between frames
         self.animation_counter = 0
         self.frame_ready = False
         self.current_image = self.images['image']
@@ -53,6 +58,8 @@ class GameObject(pygame.sprite.Sprite, object):
                     # if properties[property] == "True":
                     self.solid = True
                     self.handle_collisions = True
+                if object_property == "handle_collisions":
+                    self.handle_collisions = True
                 if object_property == "object_type":
                     self.object_type = properties[object_property]
                 if object_property == "collision_rect":
@@ -78,13 +85,14 @@ class GameObject(pygame.sprite.Sprite, object):
         self.images[key][0] = []
         self.images[key][0].append(surface)
 
-    def change_image(self, key):
+    def set_image(self, key):
         self.updated = True
         self.updated_sprite = True
         # self.image = self.images[key]
         self.current_image = self.images[key]
         self.current_key = key
         self.animation_frame = 0
+        self.rect = self.current_image[0][0].get_rect()
         # self.rotate(0)
 
     def remove_image(self, key):
@@ -239,12 +247,14 @@ class GameObject(pygame.sprite.Sprite, object):
         surface.unlock()
         return surface
 
-    def update(self, can_update):
+    def update(self, can_update=True, rewind=False):
         if self.animation_speed > 0:
-            self.animation_counter += 1
+            if not rewind:
+                self.animation_counter += 1
             if self.animation_counter >= self.animation_speed:
                 self.frame_ready = True
             if self.frame_ready and can_update:
-                self.next_frame(1)
-                self.animation_counter = 0
+                if not rewind:
+                    self.next_frame(1)
+                    self.animation_counter = 0
                 self.frame_ready = False
