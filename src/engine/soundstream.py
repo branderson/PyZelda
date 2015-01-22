@@ -1,8 +1,6 @@
 __author__ = 'brad'
 import pyaudio
 import wave
-import time
-import sys
 
 
 class SoundStream():
@@ -41,15 +39,15 @@ class SoundStream():
                 self.stream.close()
                 self.play()
 
-    def write(self):
-        if self.data == '':
-            self.destroy()
-        else:
-            self.stream.write(self.data)
-            self.data = self.file.readframes(self.chunk)
+    # def write(self):
+    #     if self.data == '':
+    #         self.destroy()
+    #     else:
+    #         self.stream.write(self.data)
+    #         self.data = self.file.readframes(self.chunk)
 
     def destroy(self):
         self.stream.stop_stream()
-        self.stream.close
+        self.stream.close()
         self.pya.terminate()
         # sounds.remove(self)

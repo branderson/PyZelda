@@ -16,6 +16,16 @@ class AbstractEffect(engine.GameObject):
 class ShortGrass(AbstractEffect):
     def __init__(self):
         AbstractEffect.__init__(self, 'effect_short_grass')
-        self.resource_manager.add_spritesheet_image('effect_short_grass', self.effect_sheet, ((1, 1), (17, 17)), (64, 64, 192))
-        self.add_image('effect_short_grass', self.resource_manager.get_images('effect_short_grass'))
-        self.set_image('effect_short_grass')
+        self.resource_manager.add_spritesheet_strip_offsets('effect_short_grass', self.effect_sheet,
+                                                            (0, 0), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.add_animation('image', self.resource_manager.get_images('effect_short_grass'))
+        self.set_animation('image')
+
+
+class ShortForestGrass(AbstractEffect):
+    def __init__(self):
+        AbstractEffect.__init__(self, 'effect_short_forest_grass')
+        self.resource_manager.add_spritesheet_strip_offsets('effect_short_forest_grass', self.effect_sheet,
+                                                            (0, 17), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.add_animation('image', self.resource_manager.get_images('effect_short_forest_grass'))
+        self.set_animation('image')

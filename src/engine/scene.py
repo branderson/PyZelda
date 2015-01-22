@@ -92,6 +92,13 @@ class Scene(object):
         #         return True
         # return False
 
+    def list_objects(self):
+        object_list = []
+        for coordinate in self.coordinate_array.keys():
+            for game_object in self.coordinate_array[coordinate]:
+                object_list.append(game_object)
+        return object_list
+
     def clear(self, key=0):
         # TODO: Make default value clear all views, also switch to view.clear()
         for coordinate in self.coordinate_array.keys():

@@ -69,26 +69,9 @@ def main():
     clock = engine.GameClock(*CLOCK_SETTINGS)
 
     # Load the resources
-    link_sheet = engine.Spritesheet(SPRITE_DIR + "LinkSheet6464192.png")
+
     overworld_sheet = engine.Spritesheet(SPRITE_DIR + "OverworldSheet.png")
     resource_manager = engine.ResourceManager()
-    resource_manager.add_spritesheet_image('link', link_sheet, ((45, 80), (16, 16)), (64, 64, 192))
-
-    # Link's animations
-    resource_manager.add_spritesheet_strip_offsets('link_walk_down', link_sheet, (37, 36), 2, 2, (14, 16), 0, 0, (64, 64, 192))
-    resource_manager.add_spritesheet_strip_offsets('link_walk_up', link_sheet, (66, 36), 2, 2, (14, 16), 0, 0, (64, 64, 192))
-    resource_manager.add_spritesheet_strip_offsets('link_walk_left', link_sheet, (5, 36), 2, 2, (15, 16), 0, 0, (64, 64, 192))
-    resource_manager.add_spritesheet_strip_offsets('link_walk_right', link_sheet, (95, 36), 2, 2, (15, 16), 0, 0, (64, 64, 192))
-    resource_manager.add_spritesheet_strip_offsets('link_push_down', link_sheet, (56, 57), 2, 2, (15, 16), 0, 0, (64, 64, 192))
-    resource_manager.add_spritesheet_strip_offsets('link_push_up', link_sheet, (88, 57), 2, 2, (17, 16), 0, 0, (64, 64, 192))
-    resource_manager.add_spritesheet_strip_offsets('link_push_left', link_sheet, (21, 57), 2, 2, (16, 16), 0, 0, (64, 64, 192))
-    resource_manager.add_spritesheet_strip_offsets('link_push_right', link_sheet, (122, 57), 2, 2, (16, 16), 0, 0, (64, 64, 192))
-    resource_manager.add_spritesheet_strip_offsets('link_shield_walk_down', link_sheet, (131, 81), 2, 2, (17, 16), 0, 0, (64, 64, 192))
-    resource_manager.add_spritesheet_strip_offsets('link_shield_walk_up', link_sheet, (166, 81), 2, 2, (18, 16), 0, 0, (64, 64, 192))
-    resource_manager.add_spritesheet_strip_offsets('link_shield_walk_left', link_sheet, (97, 81), 2, 2, (16, 16), 0, 0, (64, 64, 192))  # These two might be messed up
-    resource_manager.add_spritesheet_strip_offsets('link_shield_walk_right', link_sheet, (204, 81), 2, 2, (16, 16), 0, 0, (64, 64, 192))
-    resource_manager.add_spritesheet_strip_offsets('link_use_shield', link_sheet, (26, 81), 4, 4, (17, 16), 0, 0, (64, 64, 192))  # Needs to be fixed
-    resource_manager.add_spritesheet_strip_offsets('link_hop_down', link_sheet, (287, 132), 3, 3, (17, 16), 0, 0, (64, 64, 192))
 
     resource_manager.add_spritesheet_strip_offsets('overworld_tiles', overworld_sheet, (1, 1), 600, 24, (16, 16), 1, 1)
 
@@ -103,8 +86,6 @@ def main():
     # resource_manager.play_music(MUSIC_DIR + '10. Overworld.ogg', 6.3)
 
     # Sounds
-    resource_manager.add_sound('link_hop', SOUND_DIR + 'LA_Link_Jump.wav')
-    resource_manager.add_sound('link_shield', SOUND_DIR + 'LA_Shield.wav')
 
     game_map = engine.Map(RESOURCE_DIR + 'worlds/grassworldtmx', SPRITE_DIR + 'OverworldSheet.png')
 
@@ -131,12 +112,10 @@ def run_game():
     room_movement = {0: (TRANSITION_SPEED*.5, 0), 1: (0, -TRANSITION_SPEED*.5),
                      2: (-TRANSITION_SPEED*.5, 0), 3: (0, TRANSITION_SPEED*.5)}
 
-    link = Link(resource_manager.get_images('link'), 0)
+    link = Link(0)
     camera = engine.GameObject(collision_rect=(pygame.Rect((0, 0), (COORDINATE_WIDTH, COORDINATE_HEIGHT))),
                                handle_collisions=True, object_type="camera", persistent=True)
     camera.collision_rect.center = camera.rect.center
-
-    link.add_animations(resource_manager)
 
     link.set_animation('link_walk_down')
 
@@ -347,7 +326,7 @@ def update_player():
         if key[K_b] and link.shield:
             if link.state != "using_shield":
                 if link.state != "colliding":
-                    resource_manager.play_sound('link_shield')
+                    link.play_sound('link_shield')
                 link.state = "using_shield"
                 link.change_animation = True
                 # TODO Add second frame to shield animations and put animation_frame 0 here
@@ -402,22 +381,25 @@ def update_player():
                     previous_position = link.position
                     game_scene.increment_object(link, link_movement[move_direction])
                     for game_object in game_scene.check_object_collision_objects(link):
-                        if break_loop:
-                            break
+                        # if break_loop:
+                        #     break
                         if game_object.solid and not link.no_clip:
                             if link.state != "colliding":
                                 link.state = "colliding"
                                 link.change_animation = True
-                                break_loop = True
+                                # break_loop = True
                             # hop_encountered = False
                             not_colliding_direction = False
                             not_colliding_any = False
                         if game_object.object_type == "Jumps":
                             link.controllable = False
                             hop_encountered = True
-                        if game_object.object_type == "short_grass":
+                        if game_object.object_type == "short_grass" or game_object.object_type == "short_forest_grass":
                             if not var['short_grass_drawn']:
-                                game_scene.insert_object(effects.ShortGrass(), (link.position[0], link.position[1]+1))
+                                if game_object.object_type == "short_grass":
+                                    game_scene.insert_object(effects.ShortGrass(), link.position)
+                                elif game_object.object_type == "short_forest_grass":
+                                    game_scene.insert_object(effects.Short_Forest_Grass(), link.position)
                                 var['short_grass_drawn'] = True
                             on_short_grass = True
                     if not not_colliding_direction:
@@ -426,17 +408,20 @@ def update_player():
             if on_short_grass:
                 for coordinate in game_scene.coordinate_array.keys():
                     for game_object in game_scene.coordinate_array[coordinate]:
-                        if game_object.object_type == "effect_short_grass":
-                            game_scene.move_object(game_object, (link.position[0], link.position[1]+1))
+                        if game_object.object_type == "effect_short_grass" or \
+                           game_object.object_type == "short_forest_grass":
+                            game_scene.move_object(game_object, link.position)
+                            game_object.update()
             else:
                 for coordinate in game_scene.coordinate_array.keys():
                     for game_object in game_scene.coordinate_array[coordinate]:
-                        if game_object.object_type == "effect_short_grass":
+                        if game_object.object_type == "effect_short_grass" or \
+                           game_object.object_type == "short_forest_grass":
                             game_scene.remove_object(game_object)
                 var['short_grass_drawn'] = False
             if not_colliding_any:
                 if hop_encountered:
-                    resource_manager.play_sound("link_hop")
+                    link.play_sound("link_hop")
                     link.state = "hopping"
                     link.animation_counter = 0
                     link.change_animation = True
