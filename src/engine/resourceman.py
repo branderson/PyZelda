@@ -80,7 +80,7 @@ class ResourceManager(object):
                 self.current_key = key
             else:
                 pygame.mixer.music.load(self.music[key])
-                pygame.mixer.music.play(-1, start)
+                pygame.mixer.music.play(-1)
         # pygame.mixer.music.set_pos(start)
         # if pyglet.media.have_avbin and not self.force_pygame:
         #     self.music[key].play()

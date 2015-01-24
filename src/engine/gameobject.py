@@ -22,6 +22,8 @@ class GameObject(pygame.sprite.Sprite, object):
                 self.images['image'][0] = [image]
         self.flipped_hor = False
         self.flipped_ver = False
+        self.tinted = None
+        self.inverted = False
         self.visible = visible
         self.current_animation = 'image'
         self.animate = animate
@@ -151,7 +153,7 @@ class GameObject(pygame.sprite.Sprite, object):
     def height(self):
         return self.rect.height
 
-    def draw(self, surface, position, (x, y)):   # , x_scale, y_scale, x, y):
+    def draw(self, surface, (x, y), invert=False, tint=None):   # , x_scale, y_scale, x, y):
         # TODO: May need to change image to current_image. Also go through and make sure using right image consistently
         # rect_scaled = pygame.Rect((x-self.rect.x*x_scale, y-self.rect.y*y_scale), (int(self.rect.width*x_scale),
         #                                                                            int(self.rect.height*y_scale)))
@@ -160,6 +162,19 @@ class GameObject(pygame.sprite.Sprite, object):
             # print("drawing " + self.object_type)
         key = (surface.x_scale, surface.y_scale)
         try:
+            if (invert and not self.inverted) or (not invert and self.inverted):
+                for image in self.images.keys():
+                    for size in self.images[image].keys():
+                        for frame in xrange(0, len(self.images[image][size])):
+                            self.images[image][size][frame] = self.invert_colors(self.images[image][size][frame], (64, 64, 192))
+                            # frame = self.invert_colors(frame)
+                self.inverted = not self.inverted
+            # TODO: Make this non destructive
+            if tint is not None and self.tinted != tint:
+                for image in self.images.keys():
+                    for size in self.images[image].keys():
+                        for frame in xrange(0, len(self.images[image][size])):
+                            self.images[image][size][frame] = self.tint(self.images[image][size][frame], tint)
             surface.blit(self.images[self.current_key][key][self.animation_frame],
                          (x, y, self.images[self.current_key][key][self.animation_frame].get_width(),
                           self.images[self.current_key][key][self.animation_frame].get_height()))
@@ -223,22 +238,23 @@ class GameObject(pygame.sprite.Sprite, object):
         surface.lock()
         for x in range(0, surface.get_width() - 1):
             for y in range(0, surface.get_height() - 1):
-                new_r = surface.get_at((x, y)).r + r
+                pixel = surface.get_at((x, y))
+                new_r = pixel.r + r
                 if new_r > 255:
                     new_r = 255
                 elif new_r < 0:
                     new_r = 0
-                new_g = surface.get_at((x, y)).g + g
+                new_g = pixel.g + g
                 if new_g > 255:
                     new_g = 255
                 elif new_g < 0:
                     new_g = 0
-                new_b = surface.get_at((x, y)).b + b
+                new_b = pixel.b + b
                 if new_b > 255:
                     new_b = 255
                 elif new_b < 0:
                     new_b = 0
-                new_a = surface.get_at((x, y)).a + a
+                new_a = pixel.a + a
                 if new_a > 255:
                     new_a = 255
                 elif new_a < 0:
@@ -247,7 +263,28 @@ class GameObject(pygame.sprite.Sprite, object):
         surface.unlock()
         return surface
 
-    def update(self, can_update=True, rewind=False):
+    @staticmethod
+    def invert_colors(input_surface, colorkey=None):
+        surface = input_surface.copy()
+        surface.lock()
+        for x in range(0, surface.get_width()):
+            for y in range(0, surface.get_height()):
+                pixel = surface.get_at((x, y))
+                if pixel != colorkey:
+                    new_r = 255 - pixel.r
+                    new_g = 255 - pixel.g
+                    new_b = 255 - pixel.b
+                    a = pixel.a
+                    surface.set_at((x, y), (new_r, new_g, new_b, a))
+                else:
+                    # new_r = pixel.r
+                    # new_g = pixel.g
+                    # new_b = pixel.b
+                    surface.set_at((x, y), pixel)
+        surface.unlock()
+        return surface
+
+    def update(self, can_update=True, rewind=False, direction=1):
         if self.animation_speed > 0:
             if not rewind:
                 self.animation_counter += 1
@@ -255,6 +292,6 @@ class GameObject(pygame.sprite.Sprite, object):
                 self.frame_ready = True
             if self.frame_ready and can_update:
                 if not rewind:
-                    self.next_frame(1)
+                    self.next_frame(direction)
                     self.animation_counter = 0
                 self.frame_ready = False

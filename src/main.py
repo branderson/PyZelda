@@ -5,6 +5,7 @@ import pygame
 import engine
 import specialtiles
 import effects
+import gui
 from link import Link
 
 from pygame.locals import *
@@ -39,7 +40,7 @@ TRANSITION_SPEED = 2  # Roughly a 1.5
 
 def main():
     global screen, game_state, game_surface, gui_surface, resource_manager, clock, \
-        game_scene, current_width, current_state, pause_state, pause_scene, game_map, overworld_sheet
+        game_scene, current_width, current_state, pause_state, pause_scene, game_map, overworld_sheet, hud
     # pygame.mixer.pre_init(frequency=44100, size=-8)
     pygame.init()
     pygame.register_quit(has_quit)
@@ -53,8 +54,9 @@ def main():
                                             (COORDINATE_WIDTH, COORDINATE_HEIGHT))
     pause_surface = engine.CoordinateSurface(pygame.Rect((0, 0), (SCREEN_WIDTH, SCREEN_HEIGHT)),
                                              (COORDINATE_WIDTH, COORDINATE_HEIGHT))
-    gui_surface = engine.CoordinateSurface(pygame.Rect((0, 0), (SCREEN_WIDTH, (SCREEN_HEIGHT/COORDINATE_HEIGHT)*16)),
-                                           (COORDINATE_WIDTH, 16))
+    # gui_surface = engine.CoordinateSurface(pygame.Rect((0, 0), (SCREEN_WIDTH, (SCREEN_HEIGHT/COORDINATE_HEIGHT)*16)),
+    #                                        (COORDINATE_WIDTH, 16))
+    hud = gui.HUD(SCREEN_WIDTH, SCREEN_HEIGHT)
 
     game_scene = engine.Scene((2560, 2048))
     pause_scene = engine.Scene((COORDINATE_WIDTH, COORDINATE_HEIGHT))
@@ -82,7 +84,7 @@ def main():
     resource_manager.add_music('overworld', MUSIC_DIR + '10. Overworld' + EXTENSION)
     resource_manager.add_music('mabe_village', MUSIC_DIR + '11. Mabe Village' + EXTENSION)
     resource_manager.add_music('mysterious_forest', MUSIC_DIR + '16. Mysterious Forest' + EXTENSION)
-    resource_manager.play_music('overworld', 6.3)
+    resource_manager.play_music('mabe_village')
     # resource_manager.play_music(MUSIC_DIR + '10. Overworld.ogg', 6.3)
 
     # Sounds
@@ -106,11 +108,6 @@ def run_game():
 
     force_exit = False
 
-    camera_movement = {0: (TRANSITION_SPEED*(COORDINATE_WIDTH/32), 0), 1: (0, -TRANSITION_SPEED*(COORDINATE_HEIGHT/32)),
-                       2: (-TRANSITION_SPEED*(COORDINATE_WIDTH/32), 0), 3: (0, TRANSITION_SPEED*(COORDINATE_HEIGHT/32))}
-    link_movement = {0: (1, 0), 1: (0, -1), 2: (-1, 0), 3: (0, 1)}
-    room_movement = {0: (TRANSITION_SPEED*.5, 0), 1: (0, -TRANSITION_SPEED*.5),
-                     2: (-TRANSITION_SPEED*.5, 0), 3: (0, TRANSITION_SPEED*.5)}
 
     link = Link(0)
     camera = engine.GameObject(collision_rect=(pygame.Rect((0, 0), (COORDINATE_WIDTH, COORDINATE_HEIGHT))),
@@ -119,8 +116,14 @@ def run_game():
 
     link.set_animation('link_walk_down')
 
-    game_scene.insert_object_centered(link, (80+COORDINATE_WIDTH*var['camera_position'][0],
-                                             64+COORDINATE_HEIGHT*var['camera_position'][1]))
+    camera_movement = {0: (TRANSITION_SPEED*(COORDINATE_WIDTH/32), 0), 1: (0, -TRANSITION_SPEED*(COORDINATE_HEIGHT/32)),
+                       2: (-TRANSITION_SPEED*(COORDINATE_WIDTH/32), 0), 3: (0, TRANSITION_SPEED*(COORDINATE_HEIGHT/32))}
+    link_movement = {0: (link.speed, 0), 1: (0, -link.speed), 2: (-link.speed, 0), 3: (0, link.speed)}
+    room_movement = {0: (TRANSITION_SPEED*.5, 0), 1: (0, -TRANSITION_SPEED*.5),
+                     2: (-TRANSITION_SPEED*.5, 0), 3: (0, TRANSITION_SPEED*.5)}
+
+    game_scene.insert_object_centered(link, (112+COORDINATE_WIDTH*var['camera_position'][0],
+                                             80+COORDINATE_HEIGHT*var['camera_position'][1]))
     game_scene.insert_object_centered(camera, (80+COORDINATE_WIDTH*var['camera_position'][0],
                                                64+COORDINATE_HEIGHT*var['camera_position'][1]))
     current_state.update_collisions()
@@ -187,7 +190,7 @@ def update_logic():
 
 
 def draw_game():
-    current_state.update()
+    current_state.update(invert=True)
     screen.fill((0, 0, 0, 0))
     for scene_key in current_state.scenes.keys():  # Draws each scene in the current state to the screen
         if current_state.scenes[scene_key].active:
@@ -199,19 +202,19 @@ def draw_game():
         message = resource_manager.fonts['default'].render("PAUSE", True, (255, 255, 255, 255))
         screen.blit(message, (SCREEN_WIDTH/2-message.get_rect().width/2, SCREEN_HEIGHT/2-message.get_rect().height/2))
     draw_gui()
-    screen.blit(gui_surface, (0, SCREEN_HEIGHT-(SCREEN_HEIGHT/COORDINATE_HEIGHT)*16))
+    screen.blit(hud, (0, SCREEN_HEIGHT-(SCREEN_HEIGHT/COORDINATE_HEIGHT)*16))
     return
 
 
 def draw_gui():
-    gui_surface.fill((255, 255, 139, 255))
+    hud.fill((255, 255, 139, 255))
     text_b = resource_manager.fonts['gui_font_small'].render("B", False, (0, 0, 0, 255))
     text_a = resource_manager.fonts['gui_font_small'].render("A", False, (0, 0, 0, 255))
     text_brackets = resource_manager.fonts['gui_font_large'].render("[    ]", False, (0, 0, 0, 255))
-    gui_surface.blit(text_b, (3, 3))
-    gui_surface.blit(text_brackets, (19, 3))
-    gui_surface.blit(text_a, (120, 3))
-    gui_surface.blit(text_brackets, (136, 3))
+    hud.blit(text_b, (3, 3))
+    hud.blit(text_brackets, (19, 3))
+    hud.blit(text_a, (120, 3))
+    hud.blit(text_brackets, (136, 3))
 
 
 def handle_event(event):
@@ -279,26 +282,25 @@ def load_room():
 
 def build_world():
     global game_map
-    for coordinate in game_scene.coordinate_array.keys():
-        for game_object in game_scene.coordinate_array[coordinate]:
-            # if game_object.object_type == "Short Grass":
-            #     game_scene.remove_object(game_object)
-                # game_scene.insert_object(specialtiles.ShortGrass(game_map.resource_manager),
-                #                          coordinate)
-            # if game_object.object_type == "Map Tiles":
-            for object_property in game_object.properties.keys():
-                # if object_property == "object_type":
-                    # Build special objects
-                    # object_type = game_object.properties[object_property]
-                    # if object_type == "big_beach_grass":
-                    #     game_scene.remove_object(game_object)
-                        # game_scene.insert_object(specialtiles.BigBeachGrass(game_map.resource_manager), coordinate)
-                    # if object_type == "half_post":
-                    #     game_object.collision_rect = pygame.Rect((8, 0), (8, 16))
-                # if object_property == "collision_rect":
-                #     crect_list = map(int, game_object.properties[object_property].split(','))
-                #     game_object.collision_rect = pygame.Rect(crect_list)
-                pass
+    for game_object in game_scene.list_objects():
+        # if game_object.object_type == "Short Grass":
+        #     game_scene.remove_object(game_object)
+            # game_scene.insert_object(specialtiles.ShortGrass(game_map.resource_manager),
+            #                          coordinate)
+        # if game_object.object_type == "Map Tiles":
+        for object_property in game_object.properties.keys():
+            # if object_property == "object_type":
+                # Build special objects
+                # object_type = game_object.properties[object_property]
+                # if object_type == "big_beach_grass":
+                #     game_scene.remove_object(game_object)
+                    # game_scene.insert_object(specialtiles.BigBeachGrass(game_map.resource_manager), coordinate)
+                # if object_type == "half_post":
+                #     game_object.collision_rect = pygame.Rect((8, 0), (8, 16))
+            # if object_property == "collision_rect":
+            #     crect_list = map(int, game_object.properties[object_property].split(','))
+            #     game_object.collision_rect = pygame.Rect(crect_list)
+            pass
 
 
 def test_music_change():
@@ -399,25 +401,23 @@ def update_player():
                                 if game_object.object_type == "short_grass":
                                     game_scene.insert_object(effects.ShortGrass(), link.position)
                                 elif game_object.object_type == "short_forest_grass":
-                                    game_scene.insert_object(effects.Short_Forest_Grass(), link.position)
+                                    game_scene.insert_object(effects.ShortForestGrass(), link.position)
                                 var['short_grass_drawn'] = True
                             on_short_grass = True
                     if not not_colliding_direction:
                         link.controllable = True
                         game_scene.move_object(link, previous_position)
             if on_short_grass:
-                for coordinate in game_scene.coordinate_array.keys():
-                    for game_object in game_scene.coordinate_array[coordinate]:
-                        if game_object.object_type == "effect_short_grass" or \
-                           game_object.object_type == "short_forest_grass":
-                            game_scene.move_object(game_object, link.position)
-                            game_object.update()
+                for game_object in game_scene.list_objects():
+                    if game_object.object_type == "effect_short_grass" or \
+                       game_object.object_type == "effect_short_forest_grass":
+                        game_scene.move_object(game_object, link.position)
+                        game_object.update()
             else:
-                for coordinate in game_scene.coordinate_array.keys():
-                    for game_object in game_scene.coordinate_array[coordinate]:
-                        if game_object.object_type == "effect_short_grass" or \
-                           game_object.object_type == "short_forest_grass":
-                            game_scene.remove_object(game_object)
+                for game_object in game_scene.list_objects():
+                    if game_object.object_type == "effect_short_grass" or \
+                       game_object.object_type == "effect_short_forest_grass":
+                        game_scene.remove_object(game_object)
                 var['short_grass_drawn'] = False
             if not_colliding_any:
                 if hop_encountered:
@@ -488,12 +488,11 @@ def update_animated_tiles():
     # if var['current_frame'] > 3:
     #     var['current_frame'] = 0
     # var['animation_frames'] += 1
-    for coordinate in game_scene.coordinate_array.keys():
-        for game_object in game_scene.coordinate_array[coordinate]:
-            if game_object.animate:
-                game_object.update()
-                if var['current_frame'] != game_object.animation_frame:
-                    var['current_frame'] = game_object.animation_frame
+    for game_object in game_scene.list_objects():
+        if game_object.animate:
+            game_object.update()
+            if var['current_frame'] != game_object.animation_frame:
+                var['current_frame'] = game_object.animation_frame
 
 
 def move_camera():

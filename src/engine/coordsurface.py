@@ -130,7 +130,7 @@ class CoordinateSurface(pygame.Surface):
         # print(str(screen_x_coordinate) + " " + str(screen_y_coordinate))
         return screen_x_coordinate, screen_y_coordinate
 
-    def update(self, fill=None, masks=None):
+    def update(self, fill=None, masks=None, invert=False, tint=None):
         if self.active:
             # if fill is None:
             #     self.fill((0, 0, 0, 0))
@@ -144,7 +144,7 @@ class CoordinateSurface(pygame.Surface):
                         if game_object.layer == layer and game_object.visible:
                             if masks is None:
                                 if game_object.updated:
-                                    self.draw_object(game_object)
+                                    self.draw_object(game_object, invert=invert, tint=tint)
                                     drawn_objects += 1
                                 objects += 1
                             else:
@@ -153,7 +153,7 @@ class CoordinateSurface(pygame.Surface):
                                     if game_object.masks.count(mask) != 0:
                                         draw_game_object = True
                                 if draw_game_object and game_object.updated:
-                                    self.draw_object(game_object)
+                                    self.draw_object(game_object, invert=invert, tint=tint)
                                     drawn_objects += 1
                                 objects += 1
             # print(str(objects) + " tiles and objects in the room, " + str(drawn_objects) + " drawn to screen")
@@ -187,6 +187,17 @@ class CoordinateSurface(pygame.Surface):
                 self.set_at((x, y), (new_r, new_g, new_b, new_a))
         self.unlock()
 
+    def invert_colors(self):
+        self.lock()
+        for x in range(0, self.get_width() - 1):
+            for y in range(0, self.get_height() - 1):
+                new_r = 255 - self.get_at((x, y)).r
+                new_g = 255 - self.get_at((x, y)).g
+                new_b = 255 - self.get_at((x, y)).b
+                a = self.get_at((x, y)).a
+                self.set_at((x, y), (new_r, new_g, new_b, a))
+        self.unlock()
+
     def update_screen_coordinates(self, new_size):
         pygame.Surface.__init__(self, new_size, flags=pygame.SRCALPHA)
         self.x_scale = float(self.get_width())/float(self.coordinate_width)
@@ -196,12 +207,12 @@ class CoordinateSurface(pygame.Surface):
         pass
 
     # Deprecated
-    def draw_object(self, game_object):
+    def draw_object(self, game_object, invert=False, tint=None):
         x = self.convert_to_screen_coordinates(self.check_position(game_object))[0]
         y = self.convert_to_screen_coordinates(self.check_position(game_object))[1]
         if not (self.x_scale, self.y_scale) in game_object.current_image.keys():
             game_object.scale_to_view((self.x_scale, self.y_scale))
-        game_object.draw(self, (self.check_position(game_object)[0], self.check_position(game_object)[1]), (x, y))
+        game_object.draw(self, (x, y), invert=invert, tint=tint)
 
     def draw(self):
         return self

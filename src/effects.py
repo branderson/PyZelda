@@ -1,6 +1,7 @@
 __author__ = 'brad'
 
 import engine
+import random
 
 RESOURCE_DIR = '../resources/'
 SPRITE_DIR = RESOURCE_DIR + 'sprite/'
@@ -13,19 +14,31 @@ class AbstractEffect(engine.GameObject):
         engine.GameObject.__init__(self, layer=100, object_type=object_type)
 
 
-class ShortGrass(AbstractEffect):
+class AbstractShortGrass(AbstractEffect):
+    def __init__(self, object_type):
+        AbstractEffect.__init__(self, object_type)
+        self.direction = 1
+
+    def update(self, can_update=True, rewind=False, direction=1):
+        previous_frame = self.animation_frame
+        engine.GameObject.update(self, direction=self.direction)
+        if self.animation_frame != previous_frame:
+            self.direction = random.choice([1, -1])
+
+
+class ShortGrass(AbstractShortGrass):
     def __init__(self):
-        AbstractEffect.__init__(self, 'effect_short_grass')
+        AbstractShortGrass.__init__(self, 'effect_short_grass')
         self.resource_manager.add_spritesheet_strip_offsets('effect_short_grass', self.effect_sheet,
-                                                            (0, 0), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+                                                            (0, 0), 3, 3, (16, 16), 0, 0, (64, 64, 192))
         self.add_animation('image', self.resource_manager.get_images('effect_short_grass'))
-        self.set_animation('image')
+        self.set_animation('image', 0)
 
 
-class ShortForestGrass(AbstractEffect):
+class ShortForestGrass(AbstractShortGrass):
     def __init__(self):
-        AbstractEffect.__init__(self, 'effect_short_forest_grass')
+        AbstractShortGrass.__init__(self, 'effect_short_forest_grass')
         self.resource_manager.add_spritesheet_strip_offsets('effect_short_forest_grass', self.effect_sheet,
-                                                            (0, 17), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+                                                            (0, 0), 2, 2, (16, 16), 0, 0, (64, 64, 192))
         self.add_animation('image', self.resource_manager.get_images('effect_short_forest_grass'))
-        self.set_animation('image')
+        self.set_animation('image', 0)

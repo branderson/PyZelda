@@ -11,23 +11,26 @@ SOUND_DIR = RESOURCE_DIR + 'sound/'
 class Link(engine.GameObject):
     def __init__(self, layer=0):
         self.resource_manager = engine.ResourceManager()
-        link_sheet = engine.Spritesheet(SPRITE_DIR + "LinkSheet6464192.png")
-
+        # link_sheet = engine.Spritesheet(SPRITE_DIR + "LinkSheet6464192.png")
+        link_sheet = engine.Spritesheet(SPRITE_DIR + "Link.png")
         # Load animations
-        self.resource_manager.add_spritesheet_strip_offsets('link_walk_down', link_sheet, (37, 36), 2, 2, (14, 16), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_walk_up', link_sheet, (66, 36), 2, 2, (14, 16), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_walk_left', link_sheet, (5, 36), 2, 2, (15, 16), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_walk_right', link_sheet, (95, 36), 2, 2, (15, 16), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_push_down', link_sheet, (56, 57), 2, 2, (15, 16), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_push_up', link_sheet, (88, 57), 2, 2, (17, 16), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_push_left', link_sheet, (21, 57), 2, 2, (16, 16), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_push_right', link_sheet, (122, 57), 2, 2, (16, 16), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_shield_walk_down', link_sheet, (131, 81), 2, 2, (17, 16), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_shield_walk_up', link_sheet, (166, 81), 2, 2, (18, 16), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_shield_walk_left', link_sheet, (97, 81), 2, 2, (16, 16), 0, 0, (64, 64, 192))  # These two might be messed up
-        self.resource_manager.add_spritesheet_strip_offsets('link_shield_walk_right', link_sheet, (204, 81), 2, 2, (16, 16), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_use_shield', link_sheet, (26, 81), 4, 4, (17, 16), 0, 0, (64, 64, 192))  # Needs to be fixed
-        self.resource_manager.add_spritesheet_strip_offsets('link_hop_down', link_sheet, (287, 132), 3, 3, (17, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_walk_down', link_sheet, (32, 0), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_walk_up', link_sheet, (64, 0), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_walk_left', link_sheet, (0, 0), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_walk_right', link_sheet, (96, 0), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_push_down', link_sheet, (32, 16), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_push_up', link_sheet, (64, 16), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_push_left', link_sheet, (0, 16), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_push_right', link_sheet, (96, 16), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_shield_walk_down', link_sheet, (32, 32), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_shield_walk_up', link_sheet, (64, 32), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_shield_walk_left', link_sheet, (0, 32), 2, 2, (16, 16), 0, 0, (64, 64, 192))  # These two might be messed up
+        self.resource_manager.add_spritesheet_strip_offsets('link_shield_walk_right', link_sheet, (96, 32), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_use_shield_down', link_sheet, (32, 48), 2, 2, (16, 16), 0, 0, (64, 64, 192))  # Needs to be fixed
+        self.resource_manager.add_spritesheet_strip_offsets('link_use_shield_up', link_sheet, (64, 48), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_use_shield_left', link_sheet, (0, 48), 2, 2, (16, 16), 0, 0, (64, 64, 192))  # Take a look at black spot
+        self.resource_manager.add_spritesheet_strip_offsets('link_use_shield_right', link_sheet, (96, 48), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_hop_down', link_sheet, (0, 64), 3, 3, (16, 16), 0, 0, (64, 64, 192))
         engine.GameObject.__init__(self, self.resource_manager.get_images('link_walk_down'), layer,
                                    collision_rect=pygame.Rect((3, 4), (10, 11)),
                                    handle_collisions=True, object_type="player", persistent=True)
@@ -45,7 +48,10 @@ class Link(engine.GameObject):
         self.add_animation('link_shield_walk_down', self.resource_manager.get_images('link_shield_walk_down'))
         self.add_animation('link_shield_walk_right', self.resource_manager.get_images('link_shield_walk_right'))
         self.add_animation('link_shield_walk_left', self.resource_manager.get_images('link_shield_walk_left'))
-        self.add_animation('link_use_shield', self.resource_manager.get_images('link_use_shield'))
+        self.add_animation('link_use_shield_up', self.resource_manager.get_images('link_use_shield_up'))
+        self.add_animation('link_use_shield_down', self.resource_manager.get_images('link_use_shield_down'))
+        self.add_animation('link_use_shield_left', self.resource_manager.get_images('link_use_shield_left'))
+        self.add_animation('link_use_shield_right', self.resource_manager.get_images('link_use_shield_right'))
         self.add_animation('link_hop_down', self.resource_manager.get_images('link_hop_down'))
 
         # Add sounds to Link
@@ -53,6 +59,7 @@ class Link(engine.GameObject):
         self.resource_manager.add_sound('link_shield', SOUND_DIR + 'LA_Shield.wav')
 
         # Configure Link's properties
+        self.speed = 1  # 1.25
         self.direction = 3
         self.facing = 3
         self.moves = []
@@ -75,7 +82,7 @@ class Link(engine.GameObject):
                 if self.state == "colliding":
                     self.set_animation('link_push_right', 0)
                 elif self.state == "using_shield":
-                    self.set_animation('link_use_shield', 3)
+                    self.set_animation('link_use_shield_right', 0)
                 elif self.state == "walking":
                     if self.shield:
                         self.set_animation('link_shield_walk_right', 0)
@@ -86,7 +93,7 @@ class Link(engine.GameObject):
                 if self.state == "colliding":
                     self.set_animation('link_push_up', 0)
                 elif self.state == "using_shield":
-                    self.set_animation('link_use_shield', 2)
+                    self.set_animation('link_use_shield_up', 0)
                 # elif self.shield:
                 elif self.state == "walking":
                     if self.shield:
@@ -98,7 +105,7 @@ class Link(engine.GameObject):
                 if self.state == "colliding":
                     self.set_animation('link_push_left', 0)
                 elif self.state == "using_shield":
-                    self.set_animation('link_use_shield', 0)
+                    self.set_animation('link_use_shield_left', 0)
                 elif self.state == "walking":
                     # if self.shield:
                     #     self.set_animation('link_shield_walk_left', 0)
@@ -109,7 +116,7 @@ class Link(engine.GameObject):
                 if self.state == "colliding":
                     self.set_animation('link_push_down', 0)
                 elif self.state == "using_shield":
-                    self.set_animation('link_use_shield', 1)
+                    self.set_animation('link_use_shield_down', 0)
                 # elif self.shield and not self.hopping:
                 # else:
                 elif self.state == "walking":
@@ -124,7 +131,7 @@ class Link(engine.GameObject):
                 self.animation_speed = 15
             elif self.state == "using_shield":
                 pygame.Rect((3, 4), (10, 12))
-                self.animation_speed = 0  # 0 means don't animate
+                self.animation_speed = 15  # 0 means don't animate
             else:
                 if self.state == "walking":
                     self.collision_rect = pygame.Rect((3, 4), (10, 11))

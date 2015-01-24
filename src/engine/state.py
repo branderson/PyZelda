@@ -19,10 +19,10 @@ class State(object):
     def clear(self):
         self.scenes = {}
 
-    def update(self):
+    def update(self, invert=False, tint=None):
         for scene in self.scenes.keys():
             for key in self.scenes[scene].view_update_values.keys():
-                self.scenes[scene].update(key, *self.scenes[scene].view_update_values[key])
+                self.scenes[scene].update(key, *self.scenes[scene].view_update_values[key], invert=invert, tint=tint)
 
     def update_collisions(self):
         for key in self.scenes.keys():
