@@ -1,10 +1,9 @@
 __author__ = 'brad'
 import pygame
-import math
+import random
 
 
 class GameObject(pygame.sprite.Sprite, object):
-
     def __init__(self, image=None, layer=0, masks=None, collision_rect=None, angle=0, position=(0, 0),
                  handle_collisions=False, object_type=None, properties=None, visible=True, persistent=False,
                  tile_id=None, animate=False, animation_speed=15, current_frame=0):
@@ -153,7 +152,7 @@ class GameObject(pygame.sprite.Sprite, object):
     def height(self):
         return self.rect.height
 
-    def draw(self, surface, (x, y), invert=False, tint=None):   # , x_scale, y_scale, x, y):
+    def draw(self, surface, (x, y), invert=False, tint=(0, 0, 0), colorkey=None):   # , x_scale, y_scale, x, y):
         # TODO: May need to change image to current_image. Also go through and make sure using right image consistently
         # rect_scaled = pygame.Rect((x-self.rect.x*x_scale, y-self.rect.y*y_scale), (int(self.rect.width*x_scale),
         #                                                                            int(self.rect.height*y_scale)))
@@ -166,18 +165,25 @@ class GameObject(pygame.sprite.Sprite, object):
                 for image in self.images.keys():
                     for size in self.images[image].keys():
                         for frame in xrange(0, len(self.images[image][size])):
-                            self.images[image][size][frame] = self.invert_colors(self.images[image][size][frame], (64, 64, 192))
-                            # frame = self.invert_colors(frame)
+                            self.images[image][size][frame] = self.invert_colors(self.images[image][size][frame],
+                                                                                 colorkey=colorkey)
                 self.inverted = not self.inverted
             # TODO: Make this non destructive
-            if tint is not None and self.tinted != tint:
-                for image in self.images.keys():
-                    for size in self.images[image].keys():
-                        for frame in xrange(0, len(self.images[image][size])):
-                            self.images[image][size][frame] = self.tint(self.images[image][size][frame], tint)
-            surface.blit(self.images[self.current_key][key][self.animation_frame],
+            # if tint is not None and self.tinted != tint:
+            #     for image in self.images.keys():
+            #         for size in self.images[image].keys():
+            #             for frame in xrange(0, len(self.images[image][size])):
+            #                 self.images[image][size][frame] = self.tint(self.images[image][size][frame], tint)
+            surface.blit(self.tint(self.images[self.current_key][key][self.animation_frame], tint=tint, colorkey=colorkey),
                          (x, y, self.images[self.current_key][key][self.animation_frame].get_width(),
                           self.images[self.current_key][key][self.animation_frame].get_height()))
+            # surface.blit(self.images[self.current_key][key][self.animation_frame],
+            #          (x, y, self.images[self.current_key][key][self.animation_frame].get_width(),
+            #           self.images[self.current_key][key][self.animation_frame].get_height()))
+            # if tint != (0, 0, 0, 0):
+            #     tint_surface = pygame.Surface(self.images[self.current_key][key][self.animation_frame].get_size())
+            #     tint_surface.fill(tint)
+            #     surface.blit(tint_surface, (x, y))
         except IndexError:
             print(str(self.animation_frame) + " " + str(len(self.images[self.current_key][key])))
         self.updated = False
@@ -233,38 +239,44 @@ class GameObject(pygame.sprite.Sprite, object):
         self.rotate(0)
 
     @staticmethod
-    def tint(input_surface, (r, g, b, a)):
-        surface = input_surface.copy()
-        surface.lock()
-        for x in range(0, surface.get_width() - 1):
-            for y in range(0, surface.get_height() - 1):
-                pixel = surface.get_at((x, y))
-                new_r = pixel.r + r
-                if new_r > 255:
-                    new_r = 255
-                elif new_r < 0:
-                    new_r = 0
-                new_g = pixel.g + g
-                if new_g > 255:
-                    new_g = 255
-                elif new_g < 0:
-                    new_g = 0
-                new_b = pixel.b + b
-                if new_b > 255:
-                    new_b = 255
-                elif new_b < 0:
-                    new_b = 0
-                new_a = pixel.a + a
-                if new_a > 255:
-                    new_a = 255
-                elif new_a < 0:
-                    new_a = 0
-                surface.set_at((x, y), (new_r, new_g, new_b, new_a))
-        surface.unlock()
-        return surface
+    def tint(input_surface, tint, colorkey=None):
+        if tint == (0, 0, 0) or tint == (0, 0, 0, 0):
+            return input_surface
+        else:
+            surface = input_surface.copy()
+            surface.lock()
+            for x in range(0, surface.get_width()):
+                for y in range(0, surface.get_height()):
+                    pixel = surface.get_at((x, y))
+                    if pixel != colorkey:
+                        new_r = pixel.r + tint[0]
+                        if new_r > 255:
+                            new_r = 255
+                        elif new_r < 0:
+                            new_r = 0
+                        new_g = pixel.g + tint[1]
+                        if new_g > 255:
+                            new_g = 255
+                        elif new_g < 0:
+                            new_g = 0
+                        new_b = pixel.b + tint[2]
+                        if new_b > 255:
+                            new_b = 255
+                        elif new_b < 0:
+                            new_b = 0
+                        new_a = pixel.a
+                        if len(tint) == 4:
+                            new_a = pixel.a + tint[3]
+                            if new_a > 255:
+                                new_a = 255
+                            elif new_a < 0:
+                                new_a = 0
+                        surface.set_at((x, y), (new_r, new_g, new_b, new_a))
+            surface.unlock()
+            return surface
 
     @staticmethod
-    def invert_colors(input_surface, colorkey=None):
+    def invert_colors(input_surface, colorkey=(0, 0, 0)):
         surface = input_surface.copy()
         surface.lock()
         for x in range(0, surface.get_width()):
@@ -276,11 +288,61 @@ class GameObject(pygame.sprite.Sprite, object):
                     new_b = 255 - pixel.b
                     a = pixel.a
                     surface.set_at((x, y), (new_r, new_g, new_b, a))
-                else:
-                    # new_r = pixel.r
-                    # new_g = pixel.g
-                    # new_b = pixel.b
-                    surface.set_at((x, y), pixel)
+        surface.unlock()
+        return surface
+
+    @staticmethod
+    def bloom(input_surface, colorkey=(0, 0, 0)):
+        surface = input_surface.copy()
+        surface.lock()
+        for x in range(0, surface.get_width()):
+            for y in range(0, surface.get_height()):
+                pixel = surface.get_at((x, y))
+                if pixel != colorkey:
+                    new_r = 2*pixel.r
+                    new_g = 2*pixel.g
+                    new_b = 2*pixel.b
+                    if new_r > 255:
+                        new_r = 255
+                    if new_g > 255:
+                        new_g = 255
+                    if new_b > 255:
+                        new_b = 255
+                    a = pixel.a
+                    surface.set_at((x, y), (new_r, new_g, new_b, a))
+        surface.unlock()
+        return surface
+
+    @staticmethod
+    def gauss(input_surface, colorkey):
+        surface = input_surface.copy()
+        surface.lock()
+        for x in range(0, surface.get_width()):
+            for y in range(0, surface.get_height()):
+                pixel = surface.get_at((x, y))
+                if pixel != colorkey:
+                    arg1 = 30
+                    arg2 = 150
+                    # new_r = pixel.r + random.randrange(-pixel.r, 255 - pixel.r, 1)
+                    # new_g = pixel.g + random.randrange(-pixel.g, 255 - pixel.g, 1)
+                    # new_b = pixel.b + random.randrange(-pixel.b, 255 - pixel.b, 1)
+                    new_r = pixel.r + random.gauss(arg1, arg2)
+                    new_g = pixel.g + random.gauss(arg1, arg2)
+                    new_b = pixel.b + random.gauss(arg1, arg2)
+                    if new_r > 255:
+                        new_r = 255
+                    elif new_r < 0:
+                        new_r = 0
+                    if new_g > 255:
+                        new_g = 255
+                    elif new_g < 0:
+                        new_g = 0
+                    if new_b > 255:
+                        new_b = 255
+                    elif new_b < 0:
+                        new_b = 0
+                    a = pixel.a
+                    surface.set_at((x, y), (new_r, new_g, new_b, a))
         surface.unlock()
         return surface
 

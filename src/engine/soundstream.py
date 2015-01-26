@@ -12,10 +12,12 @@ class SoundStream():
         self.address = address
         self.chunk = 1024
         self.channels = 2
-        # self.silence = chr(0)*self.chunk*self.channels*2
+        self.silence = chr(0)*self.chunk*self.channels*2
 
     def callback(self, in_data, frame_count, time_info, status):
         data = self.file.readframes(frame_count)
+        if data == "":
+            data = self.silence
         return data, pyaudio.paContinue
 
     def play(self):

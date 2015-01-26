@@ -13,24 +13,28 @@ from pygame.locals import *
 # Screen constants
 COORDINATE_WIDTH = 160
 COORDINATE_HEIGHT = 128
+COORDINATE_SIZE = (COORDINATE_WIDTH, COORDINATE_HEIGHT)
 SCREEN_MULTIPLIER = 4
 SCREEN_WIDTH = COORDINATE_WIDTH*SCREEN_MULTIPLIER  # 640  # 480
 SCREEN_HEIGHT = (COORDINATE_HEIGHT+16)*SCREEN_MULTIPLIER  # 576  # 432
+SCREEN_SIZE = (SCREEN_WIDTH, SCREEN_HEIGHT)
 # Clock constants
 TICKS_PER_SECOND = 60.
 MAX_FPS = 60  # 60
 USE_WAIT = True
-MAX_FRAME_SKIP = 5
+MAX_FRAME_SKIP = 0
 UPDATE_CALLBACK = None
 FRAME_CALLBACK = None
 CLOCK_SETTINGS = (TICKS_PER_SECOND, MAX_FPS, USE_WAIT, MAX_FRAME_SKIP, UPDATE_CALLBACK, FRAME_CALLBACK)
                   # lambda: time.time())
 # lambda: pygame.time.get_ticks()/1000.)
 # Mask and string constants
+COLORKEY = (64, 64, 192)
 RESOURCE_DIR = '../resources/'
 SPRITE_DIR = RESOURCE_DIR + 'sprite/'
 SOUND_DIR = RESOURCE_DIR + 'sound/'
 MUSIC_DIR = RESOURCE_DIR + 'music/wav/'
+FONT_DIR = RESOURCE_DIR + 'font/'
 EXTENSION = '.wav'
 GUI_MASK = ['gui']
 GAME_MASK = ['game']
@@ -56,7 +60,7 @@ def main():
                                              (COORDINATE_WIDTH, COORDINATE_HEIGHT))
     # gui_surface = engine.CoordinateSurface(pygame.Rect((0, 0), (SCREEN_WIDTH, (SCREEN_HEIGHT/COORDINATE_HEIGHT)*16)),
     #                                        (COORDINATE_WIDTH, 16))
-    hud = gui.HUD(SCREEN_WIDTH, SCREEN_HEIGHT)
+    hud = gui.HUD((SCREEN_WIDTH, SCREEN_HEIGHT))
 
     game_scene = engine.Scene((2560, 2048))
     pause_scene = engine.Scene((COORDINATE_WIDTH, COORDINATE_HEIGHT))
@@ -77,8 +81,8 @@ def main():
 
     resource_manager.add_spritesheet_strip_offsets('overworld_tiles', overworld_sheet, (1, 1), 600, 24, (16, 16), 1, 1)
 
-    resource_manager.add_font('gui_font_small', RESOURCE_DIR + "ReturnofGanon.ttf", 20)
-    resource_manager.add_font('gui_font_large', RESOURCE_DIR + "ReturnofGanon.ttf", 46)
+    resource_manager.add_font('gui_font_small', FONT_DIR + "ReturnofGanon.ttf", 20)
+    resource_manager.add_font('gui_font_large', FONT_DIR + "ReturnofGanon.ttf", 46)
 
     # Music
     resource_manager.add_music('overworld', MUSIC_DIR + '10. Overworld' + EXTENSION)
@@ -101,13 +105,17 @@ def main():
 
 def run_game():
     global link, camera, camera_movement, \
-        link_movement, room_movement, var, game_map, force_exit
+        link_movement, room_movement, var, game_map, force_exit, textboxes
     var = {'game_ticks': 0, 'can_move': True, 'move_camera': False, 'camera_increment': 0,
            'clear_previous': False, 'current_frame': 0, 'animation_frames': 0, 'camera_position': (1, 11),
-           'short_grass_drawn': False}
+           'short_grass_drawn': False, 'invert': True}
 
     force_exit = False
 
+    # textbox = gui.TextBox("Mysterious\nForest\n(It's a little\nbit mysterious)", (SCREEN_WIDTH, SCREEN_HEIGHT),
+    #                       (COORDINATE_WIDTH, COORDINATE_HEIGHT))
+    textboxes = []
+    # textboxes.append(textbox)
 
     link = Link(0)
     camera = engine.GameObject(collision_rect=(pygame.Rect((0, 0), (COORDINATE_WIDTH, COORDINATE_HEIGHT))),
@@ -178,6 +186,7 @@ def update_logic():
 
         if var['clear_previous']:
             var['clear_previous'] = False
+            var['invert'] = True
             game_map.clear_tiles(game_scene, game_scene.view_rects['game_view'], kill_all=True)
             # if not link.hopping:
             if link.state != "hopping":
@@ -190,8 +199,9 @@ def update_logic():
 
 
 def draw_game():
-    current_state.update(invert=True)
-    screen.fill((0, 0, 0, 0))
+    current_state.update(colorkey=COLORKEY)
+    # screen.fill((0, 0, 0, 0))
+    draw_gui()
     for scene_key in current_state.scenes.keys():  # Draws each scene in the current state to the screen
         if current_state.scenes[scene_key].active:
             for surface_key in current_state.scenes[scene_key].views.keys():
@@ -201,7 +211,6 @@ def draw_game():
     if current_state == pause_state:
         message = resource_manager.fonts['default'].render("PAUSE", True, (255, 255, 255, 255))
         screen.blit(message, (SCREEN_WIDTH/2-message.get_rect().width/2, SCREEN_HEIGHT/2-message.get_rect().height/2))
-    draw_gui()
     screen.blit(hud, (0, SCREEN_HEIGHT-(SCREEN_HEIGHT/COORDINATE_HEIGHT)*16))
     return
 
@@ -215,10 +224,16 @@ def draw_gui():
     hud.blit(text_brackets, (19, 3))
     hud.blit(text_a, (120, 3))
     hud.blit(text_brackets, (136, 3))
+    for textbox in textboxes:
+        textbox.update_text()
+        if game_surface.check_position(link)[1] > COORDINATE_HEIGHT/2:
+            game_surface.blit(textbox, (8*SCREEN_MULTIPLIER, 8*SCREEN_MULTIPLIER))
+        else:
+            game_surface.blit(textbox, (8*SCREEN_MULTIPLIER, (COORDINATE_HEIGHT/2+16)*SCREEN_MULTIPLIER))
 
 
 def handle_event(event):
-    global current_state, screen, var
+    global current_state, screen, var, textboxes
     # Quit the game
     if event.type == KEYDOWN:
         key = event.key
@@ -235,6 +250,14 @@ def handle_event(event):
             # elif key == K_a and link.facing != 2 and var['can_move']:
             #     link.facing = 2
             #     link.change_animation = True
+            if key == K_SPACE:
+                for game_object in game_scene.check_collision_rect_objects(link.interaction_rect):
+                    if game_object.object_type == "Signs":
+                        link.controllable = False
+                        justify = "center"
+                        if game_object.properties.has_key("justify"):
+                            justify = game_object.properties["justify"]
+                        textboxes.append(gui.TextBox(game_object.properties["text"], SCREEN_SIZE, COORDINATE_SIZE, justify))
             if key == K_g:
                 link.change_animation = True
                 link.shield = not link.shield
@@ -245,6 +268,17 @@ def handle_event(event):
                 current_state = pause_state
             else:
                 current_state = game_state
+        if key == K_SPACE:
+            for textbox in textboxes:
+                if textbox.waiting:
+                    textbox.scroll_up()
+                if textbox.finished:
+                    textboxes.remove(textbox)
+                    del textbox
+                    game_scene.update_all = True
+                    game_scene.update('game_view')
+                    game_scene.update_all = False
+                    link.controllable = True
         if key == K_ESCAPE:
             terminate()
         if key == K_r:
@@ -261,6 +295,7 @@ def handle_event(event):
 def load_room():
     global var, game_scene, game_map
     link.controllable = False
+    var['invert'] = False
     if link.direction == 0:
         new_rect = game_scene.view_rects['game_view'].copy()
         new_rect[0] += var['camera_increment']

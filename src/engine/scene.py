@@ -130,6 +130,14 @@ class Scene(object):
                 object_list.append(game_object)
         return object_list
 
+    def check_collision_rect_objects(self, rect):
+        """Returns a list of game objects that collide with rect"""
+        object_list = []
+        for game_object in self.collision_array:
+            if self.collision_array[game_object].colliderect(rect):
+                object_list.append(game_object)
+        return object_list
+
     def check_object_collision_objects(self, game_object):
         """Returns a list of game objects that collide with object"""
         object_list = []
@@ -206,7 +214,7 @@ class Scene(object):
         return game_object.position
         # return None
 
-    def update(self, key=0, fill=None, masks=None, invert=False, tint=None):
+    def update(self, key=0, fill=None, masks=None, invert=False, tint=(0, 0, 0), colorkey=None):
         # TODO: Make default key update all views
         self.views[key].clear()
         update_collisions = False
@@ -264,7 +272,7 @@ class Scene(object):
                                                                 self.view_rects[key].x,
                                                                 self.check_position(game_object)[1] -
                                                                 self.view_rects[key].y))
-        self.views[key].update(fill, masks, invert=invert, tint=tint)
+        self.views[key].update(fill, masks, invert=invert, tint=tint, colorkey=colorkey)
 
     def update_collisions(self):
         self.collision_array = {}

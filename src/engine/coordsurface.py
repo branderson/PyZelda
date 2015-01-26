@@ -130,7 +130,7 @@ class CoordinateSurface(pygame.Surface):
         # print(str(screen_x_coordinate) + " " + str(screen_y_coordinate))
         return screen_x_coordinate, screen_y_coordinate
 
-    def update(self, fill=None, masks=None, invert=False, tint=None):
+    def update(self, fill=None, masks=None, invert=False, tint=(0, 0, 0), colorkey=None):
         if self.active:
             # if fill is None:
             #     self.fill((0, 0, 0, 0))
@@ -144,7 +144,7 @@ class CoordinateSurface(pygame.Surface):
                         if game_object.layer == layer and game_object.visible:
                             if masks is None:
                                 if game_object.updated:
-                                    self.draw_object(game_object, invert=invert, tint=tint)
+                                    self.draw_object(game_object, invert=invert, tint=tint, colorkey=colorkey)
                                     drawn_objects += 1
                                 objects += 1
                             else:
@@ -153,7 +153,7 @@ class CoordinateSurface(pygame.Surface):
                                     if game_object.masks.count(mask) != 0:
                                         draw_game_object = True
                                 if draw_game_object and game_object.updated:
-                                    self.draw_object(game_object, invert=invert, tint=tint)
+                                    self.draw_object(game_object, invert=invert, tint=tint, colorkey=colorkey)
                                     drawn_objects += 1
                                 objects += 1
             # print(str(objects) + " tiles and objects in the room, " + str(drawn_objects) + " drawn to screen")
@@ -207,12 +207,12 @@ class CoordinateSurface(pygame.Surface):
         pass
 
     # Deprecated
-    def draw_object(self, game_object, invert=False, tint=None):
+    def draw_object(self, game_object, invert=False, tint=(0, 0, 0), colorkey=(0, 0, 0)):
         x = self.convert_to_screen_coordinates(self.check_position(game_object))[0]
         y = self.convert_to_screen_coordinates(self.check_position(game_object))[1]
         if not (self.x_scale, self.y_scale) in game_object.current_image.keys():
             game_object.scale_to_view((self.x_scale, self.y_scale))
-        game_object.draw(self, (x, y), invert=invert, tint=tint)
+        game_object.draw(self, (x, y), invert=invert, tint=tint, colorkey=colorkey)
 
     def draw(self):
         return self

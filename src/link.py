@@ -72,12 +72,16 @@ class Link(engine.GameObject):
         self.controllable = True
         self.no_clip = False
         self.direction_held = False
+        self.interaction_rect = self.collision_rect.copy()
 
     def handle_animations(self):
         if self.change_animation:  # Later if walking
             if self.state == "hopping":
                 self.set_animation('link_hop_down', 0)
             if self.facing == 0:
+                self.interaction_rect = pygame.Rect((self.position[0]+self.collision_rect.x+self.collision_rect.width,
+                                                     self.position[1]+self.collision_rect.y),
+                                                    (1, self.collision_rect.height))
                 # if self.colliding:
                 if self.state == "colliding":
                     self.set_animation('link_push_right', 0)
@@ -89,6 +93,9 @@ class Link(engine.GameObject):
                     else:
                         self.set_animation('link_walk_right', 0)
             elif self.facing == 1:
+                self.interaction_rect = pygame.Rect((self.position[0]+self.collision_rect.x,
+                                                     self.position[1]+self.collision_rect.y-1),
+                                                    (self.collision_rect.width, 1))
                 # if self.colliding:
                 if self.state == "colliding":
                     self.set_animation('link_push_up', 0)
@@ -101,6 +108,9 @@ class Link(engine.GameObject):
                     else:
                         self.set_animation('link_walk_up', 0)
             elif self.facing == 2:
+                self.interaction_rect = pygame.Rect((self.position[0]+self.collision_rect.x-1,
+                                                     self.position[1]+self.collision_rect.y),
+                                                    (1, self.collision_rect.height))
                 # if self.colliding:
                 if self.state == "colliding":
                     self.set_animation('link_push_left', 0)
@@ -112,6 +122,9 @@ class Link(engine.GameObject):
                     # else:
                     self.set_animation('link_walk_left', 0)
             elif self.facing == 3:
+                self.interaction_rect = pygame.Rect((self.position[0]+self.collision_rect.x,
+                                                     self.position[1]+self.collision_rect.y+self.collision_rect.height),
+                                                    (self.collision_rect.width, 1))
                 # if self.colliding:
                 if self.state == "colliding":
                     self.set_animation('link_push_down', 0)
@@ -157,3 +170,22 @@ class Link(engine.GameObject):
             self.state = "walking"
             self.change_animation = True
             self.hop_frame = 0
+
+    # def update(self, can_update=True, rewind=False, direction=1):
+    #     engine.GameObject.update(self, can_update=can_update, rewind=rewind, direction=direction)
+    #     if self.direction == 0:
+    #         self.interaction_rect = pygame.Rect((self.collision_rect.x+self.collision_rect.width,
+    #                                              self.collision_rect.y),
+    #                                             (10, self.collision_rect.height))
+    #     elif self.direction == 1:
+    #         self.interaction_rect = pygame.Rect((self.collision_rect.x,
+    #                                              self.collision_rect.y-1),
+    #                                             (self.collision_rect.width, 10))
+    #     elif self.direction == 2:
+    #         self.interaction_rect = pygame.Rect((self.collision_rect.x-1,
+    #                                              self.collision_rect.y),
+    #                                             (10, self.collision_rect.height))
+    #     elif self.direction == 3:
+    #         self.interaction_rect = pygame.Rect((self.collision_rect.x,
+    #                                              self.collision_rect.y+self.collision_rect.height),
+    #                                             (self.collision_rect.width, 10))
