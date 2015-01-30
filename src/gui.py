@@ -17,6 +17,7 @@ class TextBox(engine.CoordinateSurface):
         self.scale = (screen_size[0]/coordinate_size[0], screen_size[1]/(coordinate_size[1]+16))
         self.width = 144*self.scale[0]
         self.height = 40*self.scale[1]
+        # pygame.Surface.__init__(self, screen_size)
         engine.CoordinateSurface.__init__(self, pygame.Rect((0, 0), (self.width, self.height)), (144, 40))
         self.fill((0, 0, 0, 255))
         self.resource_manager = engine.ResourceManager()
@@ -30,11 +31,12 @@ class TextBox(engine.CoordinateSurface):
         self.current_line = 0
         self.current_letter = 0
         self.waiting = False
+        self.scrolling = False
+        self.scroll_frame = 0
         self.finished = False
         self.rendered_letters = []
         self.line_starts = []
         self.letter_spacing = 8 * self.scale[0]
-        self.draw_position = (0, 0)
 
         line = ""
         for char in self.text:
@@ -59,7 +61,7 @@ class TextBox(engine.CoordinateSurface):
         self.frame_counter += 1
         if self.frame_counter >= self.text_speed:
             self.next_letter = True
-        if not self.finished and not self.waiting:
+        if not self.finished and not self.waiting and not self.scrolling:
             if self.next_letter:
                 self.rendered_letters.append(self.resource_manager.fonts['game_text'].render
                                              (self.lines[self.current_line][self.current_letter], False, (255, 255, 139, 255)))
@@ -74,12 +76,16 @@ class TextBox(engine.CoordinateSurface):
                     if self.current_line == len(self.lines):
                         self.finished = True
                     if self.current_line > 1 and not self.waiting:
-                        self.scroll_up()
+                        self.scrolling = True
                 self.frame_counter = 0
                 self.next_letter = False
         elif not self.finished and self.waiting:
             pass
             # TODO: Flash the down arrow
+        if self.scrolling and self.next_letter:
+            self.scroll_up()
+            self.frame_counter = 0
+            self.next_letter = False
 
     def draw_letters(self):
         # Draw all of the letters up to the current point
@@ -109,10 +115,18 @@ class TextBox(engine.CoordinateSurface):
     def scroll_up(self):
         # TODO: Scroll text up and delete previous line
         # Scrolls up in two increments, deleting previous line on first increment
-
-        # Deletes line no longer visible
-        length = len(self.lines[self.current_line-2])
-        for i in xrange(0, length):
-            self.rendered_letters.pop(0)
+        if self.scroll_frame == 0:
+            # Deletes line no longer visible
+            length = len(self.lines[self.current_line-2])
+            for i in xrange(0, length):
+                self.rendered_letters.pop(0)
         # Scroll up two increments
-        self.waiting = False
+        if self.scroll_frame < 6 and self.scroll_frame % 2 == 0:
+            scroll_surface = self.copy()
+            self.fill((0, 0, 0, 255))
+            self.blit(scroll_surface, (0, -8*self.scale[1]))
+            self.scroll_frame += 1
+        else:
+            self.waiting = False
+            self.scrolling = False
+            self.scroll_frame = 0

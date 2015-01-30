@@ -59,7 +59,8 @@ class Link(engine.GameObject):
         self.resource_manager.add_sound('link_shield', SOUND_DIR + 'LA_Shield.wav')
 
         # Configure Link's properties
-        self.speed = 1  # 1.25
+        self.speed = 1.25  # 1.25
+        self.movement = {0: (self.speed, 0), 1: (0, -self.speed), 2: (-self.speed, 0), 3: (0, self.speed)}
         self.direction = 3
         self.facing = 3
         self.moves = []
@@ -170,6 +171,10 @@ class Link(engine.GameObject):
             self.state = "walking"
             self.change_animation = True
             self.hop_frame = 0
+
+    def set_speed(self, speed):
+        self.speed = speed
+        self.movement = {0: (self.speed, 0), 1: (0, -self.speed), 2: (-self.speed, 0), 3: (0, self.speed)}
 
     # def update(self, can_update=True, rewind=False, direction=1):
     #     engine.GameObject.update(self, can_update=can_update, rewind=rewind, direction=direction)

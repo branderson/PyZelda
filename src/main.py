@@ -126,7 +126,6 @@ def run_game():
 
     camera_movement = {0: (TRANSITION_SPEED*(COORDINATE_WIDTH/32), 0), 1: (0, -TRANSITION_SPEED*(COORDINATE_HEIGHT/32)),
                        2: (-TRANSITION_SPEED*(COORDINATE_WIDTH/32), 0), 3: (0, TRANSITION_SPEED*(COORDINATE_HEIGHT/32))}
-    link_movement = {0: (link.speed, 0), 1: (0, -link.speed), 2: (-link.speed, 0), 3: (0, link.speed)}
     room_movement = {0: (TRANSITION_SPEED*.5, 0), 1: (0, -TRANSITION_SPEED*.5),
                      2: (-TRANSITION_SPEED*.5, 0), 3: (0, TRANSITION_SPEED*.5)}
 
@@ -271,7 +270,7 @@ def handle_event(event):
         if key == K_SPACE:
             for textbox in textboxes:
                 if textbox.waiting:
-                    textbox.scroll_up()
+                    textbox.scrolling = True
                 if textbox.finished:
                     textboxes.remove(textbox)
                     del textbox
@@ -416,7 +415,7 @@ def update_player():
                     not_colliding_direction = True
                     # link.direction_held = True
                     previous_position = link.position
-                    game_scene.increment_object(link, link_movement[move_direction])
+                    game_scene.increment_object(link, link.movement[move_direction])
                     for game_object in game_scene.check_object_collision_objects(link):
                         # if break_loop:
                         #     break
@@ -439,6 +438,10 @@ def update_player():
                                     game_scene.insert_object(effects.ShortForestGrass(), link.position)
                                 var['short_grass_drawn'] = True
                             on_short_grass = True
+                        if "slow" in game_object.properties:
+                            link.set_speed(float(game_object.properties["slow"]))
+                        else:
+                            link.set_speed(float(1.25))
                     if not not_colliding_direction:
                         link.controllable = True
                         game_scene.move_object(link, previous_position)

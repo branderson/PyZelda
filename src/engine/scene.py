@@ -174,9 +174,19 @@ class Scene(object):
         # self.handle_all_collisions = True
         # self.update_collisions()
         # self.handle_all_collisions = handle_all_collisions:
+        if isinstance(position[0], float) or isinstance(position[1], float):
+            for other_object in self.list_objects():
+                moved_object_rect = pygame.Rect((math.ceil(position[0]), math.ceil(position[1])),
+                                                (game_object.rect.width, game_object.rect.height))
+                other_object_rect = pygame.Rect((math.ceil(other_object.position[0]), math.ceil(other_object.position[1])),
+                                                (other_object.rect.width,
+                                                 other_object.rect.height))
+                if other_object_rect.colliderect(moved_object_rect):
+                    other_object.updated = True
         for other_object in self.list_objects():
-            moved_object_rect = pygame.Rect(position, (game_object.rect.width, game_object.rect.height))
-            other_object_rect = pygame.Rect(other_object.position,
+            moved_object_rect = pygame.Rect((math.floor(position[0]), math.floor(position[1])),
+                                            (game_object.rect.width, game_object.rect.height))
+            other_object_rect = pygame.Rect((math.floor(other_object.position[0]), math.floor(other_object.position[1])),
                                             (other_object.rect.width,
                                              other_object.rect.height))
             if other_object_rect.colliderect(moved_object_rect):
@@ -268,9 +278,9 @@ class Scene(object):
                         # self.update_collisions()
                     if self.update_all:
                         game_object.updated = True
-                    self.views[key].insert_object(game_object, (self.check_position(game_object)[0] -
+                    self.views[key].insert_object(game_object, (game_object.position[0] -
                                                                 self.view_rects[key].x,
-                                                                self.check_position(game_object)[1] -
+                                                                game_object.position[1] -
                                                                 self.view_rects[key].y))
         self.views[key].update(fill, masks, invert=invert, tint=tint, colorkey=colorkey)
 

@@ -129,10 +129,13 @@ class Map(object):
                             if is_special_tile:
                                 animated = False
                                 frames = 0
-                                for object_property in self.special_tiles[current_tile].keys():
-                                    if object_property == "animate":
-                                        animated = True
-                                        frames = int(self.special_tiles[current_tile][object_property])
+                                # for object_property in self.special_tiles[current_tile].keys():
+                                #     if object_property == "animate":
+                                #         animated = True
+                                #         frames = int(self.special_tiles[current_tile][object_property])
+                                if "animate" in self.special_tiles[current_tile]:
+                                    animated = True
+                                    frames = int(self.special_tiles[current_tile]["animate"])
                                 if animated:
                                     images = []
                                     for x in xrange(current_tile, current_tile + frames):
