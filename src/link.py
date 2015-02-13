@@ -61,7 +61,7 @@ class Link(engine.GameObject):
         # Group animations
         self.link_walk = ["link_walk_right", "link_walk_up", "link_walk_left", "link_walk_down"]
         self.link_push = ["link_push_right", "link_push_up", "link_push_left", "link_push_down"]
-        self.link_shield_walk = ["link_shield_walk_right", "link_walk_shield_up", "link_walk_shield_left", "link_walk_shield_down"]
+        self.link_shield_walk = ["link_shield_walk_right", "link_shield_walk_up", "link_shield_walk_left", "link_shield_walk_down"]
         self.link_use_shield = ["link_use_shield_right", "link_use_shield_up", "link_use_shield_left", "link_use_shield_down"]
 
         # Add sounds to Link
@@ -87,10 +87,12 @@ class Link(engine.GameObject):
         self.interaction_rect = None  # self.collision_rect.copy()
 
         # Link's States
+        # self.walk = WalkingState()
+        # self.collide = CollidingState()
+        # self.shield = ShieldState()
         self._state = WalkingState(self)
 
     def update_interactions(self):
-        print("Updating interactions")
         if self.facing == 0:
             self.interaction_rect = pygame.Rect((self.position[0]+self.collision_rect.x+self.collision_rect.width,
                                                  self.position[1]+self.collision_rect.y),
@@ -107,86 +109,6 @@ class Link(engine.GameObject):
             self.interaction_rect = pygame.Rect((self.position[0]+self.collision_rect.x,
                                                  self.position[1]+self.collision_rect.y+self.collision_rect.height),
                                                 (self.collision_rect.width, 1))
-
-    # def handle_animations(self):
-    #     if self.change_animation:  # Later if walking
-    #         if self.state == "hopping":
-    #             self.set_animation('link_hop_down', 0)
-    #         if self.state == "falling":
-    #             self.set_animation('link_fall', 0)
-    #         if self.facing == 0:
-    #             self.interaction_rect = pygame.Rect((self.position[0]+self.collision_rect.x+self.collision_rect.width,
-    #                                                  self.position[1]+self.collision_rect.y),
-    #                                                 (1, self.collision_rect.height))
-    #             # if self.colliding:
-    #             if self.state == "colliding":
-    #                 self.set_animation('link_push_right', 0)
-    #             elif self.state == "using_shield":
-    #                 self.set_animation('link_use_shield_right', 0)
-    #             elif self.state == "walking":
-    #                 if self.shield:
-    #                     self.set_animation('link_shield_walk_right', 0)
-    #                 else:
-    #                     self.set_animation('link_walk_right', 0)
-    #         elif self.facing == 1:
-    #             self.interaction_rect = pygame.Rect((self.position[0]+self.collision_rect.x,
-    #                                                  self.position[1]+self.collision_rect.y-1),
-    #                                                 (self.collision_rect.width, 1))
-    #             # if self.colliding:
-    #             if self.state == "colliding":
-    #                 self.set_animation('link_push_up', 0)
-    #             elif self.state == "using_shield":
-    #                 self.set_animation('link_use_shield_up', 0)
-    #             # elif self.shield:
-    #             elif self.state == "walking":
-    #                 if self.shield:
-    #                     self.set_animation('link_shield_walk_up', 0)
-    #                 else:
-    #                     self.set_animation('link_walk_up', 0)
-    #         elif self.facing == 2:
-    #             self.interaction_rect = pygame.Rect((self.position[0]+self.collision_rect.x-1,
-    #                                                  self.position[1]+self.collision_rect.y),
-    #                                                 (1, self.collision_rect.height))
-    #             # if self.colliding:
-    #             if self.state == "colliding":
-    #                 self.set_animation('link_push_left', 0)
-    #             elif self.state == "using_shield":
-    #                 self.set_animation('link_use_shield_left', 0)
-    #             elif self.state == "walking":
-    #                 # if self.shield:
-    #                 #     self.set_animation('link_shield_walk_left', 0)
-    #                 # else:
-    #                 self.set_animation('link_walk_left', 0)
-    #         elif self.facing == 3:
-    #             self.interaction_rect = pygame.Rect((self.position[0]+self.collision_rect.x,
-    #                                                  self.position[1]+self.collision_rect.y+self.collision_rect.height),
-    #                                                 (self.collision_rect.width, 1))
-    #             # if self.colliding:
-    #             if self.state == "colliding":
-    #                 self.set_animation('link_push_down', 0)
-    #             elif self.state == "using_shield":
-    #                 self.set_animation('link_use_shield_down', 0)
-    #             # elif self.shield and not self.hopping:
-    #             # else:
-    #             elif self.state == "walking":
-    #                 if self.shield:
-    #                     self.set_animation('link_shield_walk_down', 0)
-    #                 else:
-    #                     self.set_animation('link_walk_down', 0)
-    #
-    #         # Set animation speeds
-    #         # if self.colliding:
-    #         if self.state == "colliding":
-    #             self.animation_speed = 15
-    #         elif self.state == "using_shield":
-    #             pygame.Rect((3, 4), (10, 12))
-    #             self.animation_speed = 15  # 0 means don't animate
-    #         else:
-    #             if self.state == "walking":
-    #                 self.collision_rect = pygame.Rect((3, 4), (10, 11))
-    #             self.animation_speed = 15
-    #
-    #         self.change_animation = False
 
     def play_sound(self, key):
         self.resource_manager.play_sound(key)
@@ -231,9 +153,10 @@ class WalkingState(engine.ObjectState):
         key = pygame.key.get_pressed()
         moves = []
         moved = False
+
         if key[K_b] and link.shield:
             link.play_sound('link_shield')
-            link._state = ShieldState()
+            link._state = ShieldState(link)
 
         # Gather movement directions
         if not key[K_a] and not key[K_d] and not key[K_w] and not key[K_s] and not key[K_b]:
@@ -405,11 +328,15 @@ class FallingState(engine.ObjectState):
 
 
 class ShieldState(engine.ObjectState):
-    def __init__(self):
+    def __init__(self, link):
         engine.ObjectState.__init__(self)
+        link.set_animation(link.link_use_shield[link.facing], 0)
 
-    def handle_input(self, game_object):
-        pass
+    @staticmethod
+    def handle_input(link, game_scene):
+        key = pygame.key.get_pressed()
+        if not key[K_b]:
+            link._state = WalkingState(link)
 
     def update(self, game_object):
         pass

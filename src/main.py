@@ -236,18 +236,22 @@ def handle_event(event):
     # Quit the game
     if event.type == KEYDOWN:
         key = event.key
-        if key == K_SPACE:
-            for game_object in game_scene.check_collision_rect_objects(link.interaction_rect):
-                if game_object.object_type == "Signs":
-                    link.controllable = False
-                    justify = "center"
-                    if "justify" in game_object.properties:
-                        justify = game_object.properties["justify"]
-                    textboxes.append(gui.TextBox(game_object.properties["text"], SCREEN_SIZE, COORDINATE_SIZE, justify))
-            if key == K_g:
-                link.change_animation = True
+        if link.controllable:
+            if key == K_SPACE:
+                for game_object in game_scene.check_collision_rect_objects(link.interaction_rect):
+                    if game_object.object_type == "Signs":
+                        link.controllable = False
+                        justify = "center"
+                        if "justify" in game_object.properties:
+                            justify = game_object.properties["justify"]
+                        textboxes.append(gui.TextBox(game_object.properties["text"], SCREEN_SIZE, COORDINATE_SIZE, justify))
+            elif key == K_g:
                 link.shield = not link.shield
-            if key == K_n:
+                if link.shield:
+                    link.set_animation(link.link_shield_walk[link.facing], 0)
+                else:
+                    link.set_animation(link.link_walk[link.facing], 0)
+            elif key == K_n:
                 link.no_clip = not link.no_clip
         if key == K_TAB:
             if current_state == game_state:
