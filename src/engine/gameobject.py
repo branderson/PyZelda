@@ -3,6 +3,14 @@ import pygame
 import random
 
 
+class ObjectState(object):
+    def __init__(self):
+        pass
+
+    def update(self, game_object):
+        pass
+
+
 class GameObject(pygame.sprite.Sprite, object):
     def __init__(self, image=None, layer=0, masks=None, collision_rect=None, angle=0, position=(0, 0),
                  handle_collisions=False, object_type=None, properties=None, visible=True, persistent=False,
@@ -44,6 +52,8 @@ class GameObject(pygame.sprite.Sprite, object):
         # self.images['image'] = self.image
         self.angle = angle
         self.position = position
+        self.states = {}
+        self._state = None
         self.handle_collisions = handle_collisions
         self.object_type = object_type
         self.persistent = persistent
@@ -202,15 +212,6 @@ class GameObject(pygame.sprite.Sprite, object):
                 #                                                                  (int(self.images[image_list][image].get_width()*scaling[0]),
                 #                                                                   int(self.images[image_list][image].get_height()*scaling[1])))
 
-    # def scale(self, x_scale, y_scale):
-    # TODO: Implement GameObject.scale()
-    #     self.image_scaled = pygame.transform.scale(self.image, (int(self.image.get_width()*x_scale),
-    #                                                             int(self.image.get_height()*y_scale)))
-    #     # self.rect_scaled.inflate_ip(-x_scale, -y_scale)
-    #     self.rect = pygame.Rect(self.rect.topleft, (int(self.rect.width*x_scale), int(self.rect.height*y_scale)))
-    #     # print(str(self.rect_scaled.x) + " " + str(self.rect_scaled.y))
-    #     # pygame.quit()
-
     def rotate(self, angle):
         self.angle += angle
         rect = self.rect
@@ -347,6 +348,9 @@ class GameObject(pygame.sprite.Sprite, object):
         return surface
 
     def update(self, can_update=True, rewind=False, direction=1):
+        if self._state is not None:
+            # self._state.update(self)
+            pass
         if self.animation_speed > 0:
             if not rewind:
                 self.animation_counter += 1

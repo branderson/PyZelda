@@ -236,27 +236,14 @@ def handle_event(event):
     # Quit the game
     if event.type == KEYDOWN:
         key = event.key
-        if link.controllable:
-            # if key == K_w and link.facing != 1 and var['can_move']:
-            #     link.facing = 1
-            #     link.change_animation = True
-            # elif key == K_s and link.facing != 3 and var['can_move']:
-            #     link.facing = 3
-            #     link.change_animation = True
-            # elif key == K_d and link.facing != 0 and var['can_move']:
-            #     link.facing = 0
-            #     link.change_animation = True
-            # elif key == K_a and link.facing != 2 and var['can_move']:
-            #     link.facing = 2
-            #     link.change_animation = True
-            if key == K_SPACE:
-                for game_object in game_scene.check_collision_rect_objects(link.interaction_rect):
-                    if game_object.object_type == "Signs":
-                        link.controllable = False
-                        justify = "center"
-                        if game_object.properties.has_key("justify"):
-                            justify = game_object.properties["justify"]
-                        textboxes.append(gui.TextBox(game_object.properties["text"], SCREEN_SIZE, COORDINATE_SIZE, justify))
+        if key == K_SPACE:
+            for game_object in game_scene.check_collision_rect_objects(link.interaction_rect):
+                if game_object.object_type == "Signs":
+                    link.controllable = False
+                    justify = "center"
+                    if "justify" in game_object.properties:
+                        justify = game_object.properties["justify"]
+                    textboxes.append(gui.TextBox(game_object.properties["text"], SCREEN_SIZE, COORDINATE_SIZE, justify))
             if key == K_g:
                 link.change_animation = True
                 link.shield = not link.shield
@@ -317,11 +304,6 @@ def load_room():
 def build_world():
     global game_map
     for game_object in game_scene.list_objects():
-        # if game_object.object_type == "Short Grass":
-        #     game_scene.remove_object(game_object)
-            # game_scene.insert_object(specialtiles.ShortGrass(game_map.resource_manager),
-            #                          coordinate)
-        # if game_object.object_type == "Map Tiles":
         for object_property in game_object.properties.keys():
             # if object_property == "object_type":
                 # Build special objects
@@ -354,135 +336,156 @@ def update_player():
 
     moved = False
     action = False
+    #
+    # # Move link if keys are pressed
+    # key = pygame.key.get_pressed()
+    # if link.controllable:
+    #     # If not holding a movement key
+    #     if key[K_b] and link.shield:
+    #         if link.state != "using_shield":
+    #             if link.state != "colliding":
+    #                 link.play_sound('link_shield')
+    #             link.state = "using_shield"
+    #             link.change_animation = True
+    #             # TODO Add second frame to shield animations and put animation_frame 0 here
+    #         action = True
+    #     if not key[K_a] and not key[K_d] and not key[K_w] and not key[K_s] and not key[K_b]:
+    #         link.set_animation_frame(0)
+    #     # If holding a movement key
+    #     else:
+    #         if key[K_a] and not key[K_d]:
+    #             if not key[K_w] and not key[K_s] and link.facing != 2:
+    #                 link.facing = 2
+    #                 link.change_animation = True
+    #             link.direction = 2
+    #             link.moves.append(2)
+    #             moved = True
+    #         elif key[K_d] and not key[K_a]:
+    #             if not key[K_w] and not key[K_s] and link.facing != 0:
+    #                 link.facing = 0
+    #                 link.change_animation = True
+    #             link.direction = 0
+    #             link.moves.append(0)
+    #             moved = True
+    #         if key[K_s] and not key[K_w]:
+    #             if not key[K_d] and not key[K_a] and link.facing != 3:
+    #                 link.facing = 3
+    #                 link.change_animation = True
+    #             link.direction = 3
+    #             link.moves.append(3)
+    #             moved = True
+    #         elif key[K_w] and not key[K_s]:
+    #             if not key[K_d] and not key[K_a] and link.facing != 1:
+    #                 link.facing = 1
+    #                 link.change_animation = True
+    #             link.direction = 1
+    #             link.moves.append(1)
+    #             moved = True
 
-    # Move link if keys are pressed
-    key = pygame.key.get_pressed()
-    if link.controllable:
-        # If not holding a movement key
-        if key[K_b] and link.shield:
-            if link.state != "using_shield":
-                if link.state != "colliding":
-                    link.play_sound('link_shield')
-                link.state = "using_shield"
-                link.change_animation = True
-                # TODO Add second frame to shield animations and put animation_frame 0 here
-            action = True
-        if not key[K_a] and not key[K_d] and not key[K_w] and not key[K_s] and not key[K_b]:
-            link.set_animation_frame(0)
-            # link.direction_held = False
-        # If holding a movement key
-        else:
-            if key[K_a] and not key[K_d]:
-                if not key[K_w] and not key[K_s] and link.facing != 2:
-                    link.facing = 2
-                    link.change_animation = True
-                link.direction = 2
-                link.moves.append(2)
-                # game_scene.increment_object(link, link_movement[link.direction])
-                moved = True
-            elif key[K_d] and not key[K_a]:
-                if not key[K_w] and not key[K_s] and link.facing != 0:
-                    link.facing = 0
-                    link.change_animation = True
-                link.direction = 0
-                link.moves.append(0)
-                # game_scene.increment_object(link, link_movement[link.direction])
-                moved = True
-            if key[K_s] and not key[K_w]:
-                if not key[K_d] and not key[K_a] and link.facing != 3:
-                    link.facing = 3
-                    link.change_animation = True
-                link.direction = 3
-                link.moves.append(3)
-                # game_scene.increment_object(link, link_movement[link.direction])
-                moved = True
-            elif key[K_w] and not key[K_s]:
-                if not key[K_d] and not key[K_a] and link.facing != 1:
-                    link.facing = 1
-                    link.change_animation = True
-                link.direction = 1
-                link.moves.append(1)
-                # game_scene.increment_object(link, link_movement[link.direction])
-                moved = True
         # Execute all movement keys held and check for collisions in each direction
-        if moved:
-            break_loop = False
-            not_colliding_any = True
-            hop_encountered = False
-            on_short_grass = False
-            for move_direction in link.moves:
-                if link.controllable:
-                    not_colliding_direction = True
-                    # link.direction_held = True
-                    previous_position = link.position
-                    game_scene.increment_object(link, link.movement[move_direction])
-                    for game_object in game_scene.check_object_collision_objects(link):
-                        # if break_loop:
-                        #     break
-                        if game_object.solid and not link.no_clip:
-                            if link.state != "colliding":
-                                link.state = "colliding"
-                                link.change_animation = True
-                                # break_loop = True
-                            # hop_encountered = False
-                            not_colliding_direction = False
-                            not_colliding_any = False
-                        if game_object.object_type == "Jumps":
-                            link.controllable = False
-                            hop_encountered = True
-                        if game_object.object_type == "short_grass" or game_object.object_type == "short_forest_grass":
-                            if not var['short_grass_drawn']:
-                                if game_object.object_type == "short_grass":
-                                    game_scene.insert_object(effects.ShortGrass(), link.position)
-                                elif game_object.object_type == "short_forest_grass":
-                                    game_scene.insert_object(effects.ShortForestGrass(), link.position)
-                                var['short_grass_drawn'] = True
-                            on_short_grass = True
-                        if "slow" in game_object.properties:
-                            link.set_speed(float(game_object.properties["slow"]))
-                        else:
-                            link.set_speed(float(1.25))
-                    if not not_colliding_direction:
-                        link.controllable = True
-                        game_scene.move_object(link, previous_position)
-            if on_short_grass:
-                for game_object in game_scene.list_objects():
-                    if game_object.object_type == "effect_short_grass" or \
-                       game_object.object_type == "effect_short_forest_grass":
-                        game_scene.move_object(game_object, link.position)
-                        game_object.update()
-            else:
-                for game_object in game_scene.list_objects():
-                    if game_object.object_type == "effect_short_grass" or \
-                       game_object.object_type == "effect_short_forest_grass":
-                        game_scene.remove_object(game_object)
-                var['short_grass_drawn'] = False
-            if not_colliding_any:
-                if hop_encountered:
-                    link.play_sound("link_hop")
-                    link.state = "hopping"
-                    link.animation_counter = 0
-                    link.change_animation = True
-                if link.state == "colliding":
-                    link.state = "walking"
-                    link.controllable = True
-                    link.change_animation = True
-            link.moves = []
-        if moved:
-            link.update(True)
-        elif action:
-            link.update(False)
-        elif link.state:
-            link.state = "walking"
-            link.change_animation = True
-    else:
-        if link.state == "hopping":
-            moved = False
-            for game_object in game_scene.check_object_collision_objects(link):
-                if game_object.solid or game_object.object_type == "Jumps":
-                    game_scene.increment_object(link, (0, 1))
-                    moved = True
-            link.hop(moved)
+        # if moved:
+        #     not_colliding_any = True
+        #     hop_encountered = False
+        #     on_short_grass = False
+        #     for move_direction in link.moves:
+        #         if link.controllable:
+        #             not_colliding_direction = True
+        #             previous_position = link.position
+        #             game_scene.increment_object(link, link.movement[move_direction])
+        #             for game_object in game_scene.check_object_collision_objects(link):
+        #                 # Regular collisions, stop movement
+        #                 if game_object.solid and not link.no_clip:
+        #                     if link.state != "colliding":
+        #                         link.state = "colliding"
+        #                         link.change_animation = True
+        #                     not_colliding_direction = False
+        #                     not_colliding_any = False
+        #                     break
+        #
+        #                 # Holes
+        #                 if game_object.object_type == "hole":
+        #                     link.state = "slipping"
+        #                     not_colliding_any = False
+        #                     if game_scene.check_contain_object(game_object, link):
+        #                         link.state = "falling"
+        #                         link.change_animation = True
+        #
+        #                 # Jump spots
+        #                 if game_object.object_type == "Jumps":
+        #                     link.controllable = False
+        #                     hop_encountered = True
+        #
+        #                 # Short grass
+        #                 if game_object.object_type == "short_grass" or game_object.object_type == "short_forest_grass":
+        #                     if not var['short_grass_drawn']:
+        #                         if game_object.object_type == "short_grass":
+        #                             game_scene.insert_object(effects.ShortGrass(), link.position)
+        #                         elif game_object.object_type == "short_forest_grass":
+        #                             game_scene.insert_object(effects.ShortForestGrass(), link.position)
+        #                         var['short_grass_drawn'] = True
+        #                     on_short_grass = True
+        #
+        #                 # Stairs
+        #                 if "slow" in game_object.properties:
+        #                     link.set_speed(float(game_object.properties["slow"]))
+        #                 else:
+        #                     link.set_speed(float(1.25))
+        #
+        #             # Move is ok, execute
+        #             if not not_colliding_direction:
+        #                 game_scene.move_object(link, previous_position)
+        #
+        #     # Move short grass and update animations
+        #     if on_short_grass:
+        #         for game_object in game_scene.list_objects():
+        #             if game_object.object_type == "effect_short_grass" or \
+        #                game_object.object_type == "effect_short_forest_grass":
+        #                 game_scene.move_object(game_object, link.position)
+        #                 game_object.update()
+        #     else:
+        #         for game_object in game_scene.list_objects():
+        #             if game_object.object_type == "effect_short_grass" or \
+        #                game_object.object_type == "effect_short_forest_grass":
+        #                 game_scene.remove_object(game_object)
+        #         var['short_grass_drawn'] = False
+        #
+        #     # Step passed with no hard collisions or hole encounters
+        #     if not_colliding_any:
+        #         if hop_encountered:
+        #             link.play_sound("link_hop")
+        #             link.state = "hopping"
+        #             link.animation_counter = 0
+        #             link.change_animation = True
+        #         if link.state == "colliding" or link.state == "slipping":
+        #             link.state = "walking"
+        #             link.controllable = True
+        #             link.change_animation = True
+        #     elif link.state == "slipping":
+        #         # TODO: Fall toward hole
+        #         pass
+        #     if link.state == "falling":
+        #         link.controllable = False
+        #         print("Link died")
+        #     link.moves = []
+
+    if link.controllable:
+        link.handle_input(game_scene)
+
+        # if moved:
+        #     link.update(True)
+        # elif action:
+        #     link.update(False)
+        # else:
+        #     link.state = "walking"
+        #     link.change_animation = True
+    # else:
+    #     if link.state == "hopping":
+    #         moved = False
+    #         for game_object in game_scene.check_object_collision_objects(link):
+    #             if game_object.solid or game_object.object_type == "Jumps":
+    #                 game_scene.increment_object(link, (0, 1))
+    #                 moved = True
+    #         link.hop(moved)
 
     # Check for collision with edge of screen
     if camera.position[0] - link.position[0] > COORDINATE_WIDTH/2:
@@ -515,7 +518,7 @@ def update_player():
         return
 
     # Handle animations
-    link.handle_animations()
+    # link.handle_animations()
 
 
 def update_animated_tiles():
