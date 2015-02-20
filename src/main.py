@@ -239,7 +239,7 @@ def handle_event(event):
         if link.controllable:
             if key == K_SPACE:
                 for game_object in game_scene.check_collision_rect_objects(link.interaction_rect):
-                    if game_object.object_type == "Signs":
+                    if game_object.object_type == "sign":
                         link.controllable = False
                         justify = "center"
                         if "justify" in game_object.properties:
@@ -351,7 +351,6 @@ def update_player():
     #                 link.play_sound('link_shield')
     #             link.state = "using_shield"
     #             link.change_animation = True
-    #             # TODO Add second frame to shield animations and put animation_frame 0 here
     #         action = True
     #     if not key[K_a] and not key[K_d] and not key[K_w] and not key[K_s] and not key[K_b]:
     #         link.set_animation_frame(0)

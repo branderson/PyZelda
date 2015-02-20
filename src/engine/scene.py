@@ -191,7 +191,6 @@ class Scene(object):
                 remove_keys.append(coordinate)
         for coordinate in remove_keys:
             self.coordinate_array.pop(coordinate)
-        # print(str(len(self.coordinate_array.keys())))
         for game_object in self.list_objects():
             if game_object.updated_sprite:
                 update_collisions = True
@@ -201,7 +200,6 @@ class Scene(object):
             add_object = False
             object_rect = pygame.Rect(self.check_position(game_object), (game_object.rect.width,
                                                                          game_object.rect.height))
-            # self.collision_array[game_object] = object_rect
             if self.view_rects[key].colliderect(object_rect) and game_object.visible:
                 if masks is None:
                     add_object = True
@@ -211,15 +209,10 @@ class Scene(object):
                             add_object = True
                 if add_object and self.views[key].active:
                     if game_object.updated:
-                        # if game_object.updated_sprite:
                         game_object.rect = pygame.Rect((0, 0), (game_object.images[game_object.current_key][0]
                                                                 [game_object.animation_frame].get_width(),
                                                                 game_object.images[game_object.current_key][0]
                                                                 [game_object.animation_frame].get_height()))
-                        # handle_all_collisions = self.handle_all_collisions
-                        # self.handle_all_collisions = True
-                        # self.update_collisions()
-                        # self.handle_all_collisions = handle_all_collisions
                         for other_object in self.list_objects():
                             collide_object_rect = pygame.Rect(game_object.scene_position,
                                                               (game_object.rect.width,
@@ -227,12 +220,8 @@ class Scene(object):
                             other_object_rect = pygame.Rect(other_object.scene_position,
                                                             (other_object.rect.width,
                                                              other_object.rect.height))
-                            # if self.collision_array[other_object].colliderect(collide_object_rect):
                             if other_object_rect.colliderect(collide_object_rect):
                                 other_object.updated = True
-                            #     if other_object.object_type == "half_post":
-                            #         print("Half post updated")
-                        # self.update_collisions()
                     if self.update_all:
                         game_object.updated = True
                     self.views[key].insert_object(game_object, (game_object.position[0] -

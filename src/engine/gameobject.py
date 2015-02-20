@@ -257,35 +257,40 @@ class GameObject(pygame.sprite.Sprite, object):
             return input_surface
         else:
             surface = input_surface.copy()
-            surface.lock()
-            for x in range(0, surface.get_width()):
-                for y in range(0, surface.get_height()):
-                    pixel = surface.get_at((x, y))
-                    if pixel != colorkey:
-                        new_r = pixel.r + tint[0]
-                        if new_r > 255:
-                            new_r = 255
-                        elif new_r < 0:
-                            new_r = 0
-                        new_g = pixel.g + tint[1]
-                        if new_g > 255:
-                            new_g = 255
-                        elif new_g < 0:
-                            new_g = 0
-                        new_b = pixel.b + tint[2]
-                        if new_b > 255:
-                            new_b = 255
-                        elif new_b < 0:
-                            new_b = 0
-                        new_a = pixel.a
-                        if len(tint) == 4:
-                            new_a = pixel.a + tint[3]
-                            if new_a > 255:
-                                new_a = 255
-                            elif new_a < 0:
-                                new_a = 0
-                        surface.set_at((x, y), (new_r, new_g, new_b, new_a))
-            surface.unlock()
+            tint_surface = pygame.Surface((surface.get_width(), surface.get_height()))
+            tint_surface.fill(tint)
+            surface.blit(tint_surface, (0, 0))
+        # else:
+        #     surface = input_surface.copy()
+        #     surface.lock()
+        #     for x in range(0, surface.get_width()):
+        #         for y in range(0, surface.get_height()):
+        #             pixel = surface.get_at((x, y))
+        #             if pixel != colorkey:
+        #                 new_r = pixel.r + tint[0]
+        #                 if new_r > 255:
+        #                     new_r = 255
+        #                 elif new_r < 0:
+        #                     new_r = 0
+        #                 new_g = pixel.g + tint[1]
+        #                 if new_g > 255:
+        #                     new_g = 255
+        #                 elif new_g < 0:
+        #                     new_g = 0
+        #                 new_b = pixel.b + tint[2]
+        #                 if new_b > 255:
+        #                     new_b = 255
+        #                 elif new_b < 0:
+        #                     new_b = 0
+        #                 new_a = pixel.a
+        #                 if len(tint) == 4:
+        #                     new_a = pixel.a + tint[3]
+        #                     if new_a > 255:
+        #                         new_a = 255
+        #                     elif new_a < 0:
+        #                         new_a = 0
+        #                 surface.set_at((x, y), (new_r, new_g, new_b, new_a))
+        #     surface.unlock()
             return surface
 
     @staticmethod

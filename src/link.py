@@ -147,6 +147,7 @@ class WalkingState(engine.ObjectState):
             link.set_animation(link.link_walk[link.facing], 0)
         else:
             link.set_animation(link.link_shield_walk[link.facing], 0)
+        link.controllable = True
 
     @staticmethod
     def handle_input(link, game_scene):
@@ -208,14 +209,28 @@ class WalkingState(engine.ObjectState):
             for move_direction in moves:
                 previous_position = link.position
                 link.increment(link.movement[move_direction])
-                for game_object in game_scene.check_object_collision_objects(link):
-                    # Regular collisions, stop movement
-                    if game_object.solid and not link.no_clip:
+                # Deal with collisions
+                if not link.no_clip:
+                    collisions = []
+                    # Figure out what link is colliding with
+                    for game_object in game_scene.check_object_collision_objects(link):
+                        # Regular collisions, stop movement
+                        if game_object.solid:
+                            collisions.append("solid")
+                        if "slow" in game_object.properties:
+                            collisions.append("slow")
+                        if game_object.object_type == "hole":
+                            collisions.append("hole")
+                        if game_object.object_type == "jump":
+                            collisions.append("jump")
+                    if "solid" in collisions:
                         link.move(previous_position)
                         link._state = CollidingState(link)
-
-                    # Stairs
-                    if "slow" in game_object.properties:
+                    elif "jump" in collisions:
+                        link._state = HoppingState(link)
+                    elif "hole" in collisions:
+                        link._state = SlippingState(link)
+                    if "slow" in collisions:
                         link.set_speed(float(game_object.properties["slow"]))
                     else:
                         link.set_speed(float(1.25))
@@ -230,6 +245,7 @@ class CollidingState(engine.ObjectState):
     def __init__(self, link):
         engine.ObjectState.__init__(self)
         link.set_animation(link.link_push[link.facing], 0)
+        link.controllable = True
 
     @staticmethod
     def handle_input(link, game_scene):
@@ -295,8 +311,10 @@ class CollidingState(engine.ObjectState):
 
 
 class HoppingState(engine.ObjectState):
-    def __init__(self):
+    def __init__(self, link):
         engine.ObjectState.__init__(self)
+        link.set_animation(link.link_push[link.facing], 0)
+        link.controllable = False
 
     def handle_input(self, game_object):
         pass
