@@ -51,6 +51,7 @@ class GameObject(pygame.sprite.Sprite, object):
         self.masks = []
         # self.images['image'] = self.image
         self.angle = angle
+        self.scene_position = None
         self.position = position
         self.states = {}
         self._state = None
@@ -151,6 +152,17 @@ class GameObject(pygame.sprite.Sprite, object):
             return True
         else:
             return False
+
+    def move(self, coordinate):
+        self.updated = True
+        if coordinate is not None:
+            self.position = coordinate
+            return True
+        else:
+            return False
+
+    def increment(self, increment):
+        return self.move((self.position[0] + increment[0], self.position[1] + increment[1]))
 
     def destroy(self):
         del self

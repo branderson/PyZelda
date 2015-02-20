@@ -543,9 +543,9 @@ def update_animated_tiles():
 def move_camera():
     if var['camera_increment'] > 0:
         game_scene.update_all = True
-        game_scene.increment_object(camera, camera_movement[link.direction])
+        camera.increment(camera_movement[link.direction])
         # print(str(camera_movement[player_var['direction']][1]))
-        game_scene.increment_object(link, room_movement[link.direction])
+        link.increment(room_movement[link.direction])
         if link.direction == 1 or link.direction == 3:
             var['camera_increment'] -= abs(camera_movement[link.direction][1])
         else:

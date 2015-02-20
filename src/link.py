@@ -207,11 +207,11 @@ class WalkingState(engine.ObjectState):
         if moved:
             for move_direction in moves:
                 previous_position = link.position
-                game_scene.increment_object(link, link.movement[move_direction])
+                link.increment(link.movement[move_direction])
                 for game_object in game_scene.check_object_collision_objects(link):
                     # Regular collisions, stop movement
                     if game_object.solid and not link.no_clip:
-                        game_scene.move_object(link, previous_position)
+                        link.move(previous_position)
                         link._state = CollidingState(link)
 
                     # Stairs
@@ -271,7 +271,7 @@ class CollidingState(engine.ObjectState):
             for move_direction in moves:
                 not_colliding_direction = True
                 previous_position = link.position
-                game_scene.increment_object(link, link.movement[move_direction])
+                link.increment(link.movement[move_direction])
                 for game_object in game_scene.check_object_collision_objects(link):
                     # Regular collisions, stop movement
                     if game_object.solid and not link.no_clip:
@@ -285,7 +285,7 @@ class CollidingState(engine.ObjectState):
                         link.set_speed(float(1.25))
 
                 if not not_colliding_direction:
-                    game_scene.move_object(link, previous_position)
+                    link.move(previous_position)
             link.update()
         if not_colliding_any:
             link._state = WalkingState(link)
