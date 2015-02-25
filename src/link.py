@@ -2,6 +2,8 @@ __author__ = 'brad'
 
 import engine
 import pygame
+import effects
+import random
 
 from pygame.locals import *
 
@@ -34,6 +36,10 @@ class Link(engine.GameObject):
         self.resource_manager.add_spritesheet_strip_offsets('link_use_shield_right', link_sheet, (96, 48), 2, 2, (16, 16), 0, 0, (64, 64, 192))
         self.resource_manager.add_spritesheet_strip_offsets('link_hop_down', link_sheet, (0, 64), 3, 3, (16, 16), 0, 0, (64, 64, 192))
         self.resource_manager.add_spritesheet_strip_offsets('link_fall', link_sheet, (0, 96), 3, 3, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_sword_down', link_sheet, (96, 112), 3, 3, (32, 32), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_sword_up', link_sheet, (192, 112), 3, 3, (32, 32), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_sword_left', link_sheet, (0, 112), 3, 3, (32, 32), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_sword_right', link_sheet, (288, 112), 3, 3, (32, 32), 0, 0, (64, 64, 192))
         engine.GameObject.__init__(self, self.resource_manager.get_images('link_walk_down'), layer,
                                    collision_rect=pygame.Rect((3, 4), (10, 11)),
                                    handle_collisions=True, object_type="player", persistent=True)
@@ -57,33 +63,43 @@ class Link(engine.GameObject):
         self.add_animation('link_use_shield_right', self.resource_manager.get_images('link_use_shield_right'))
         self.add_animation('link_hop_down', self.resource_manager.get_images('link_hop_down'))
         self.add_animation('link_fall', self.resource_manager.get_images('link_fall'))
+        self.add_animation('link_sword_up', self.resource_manager.get_images('link_sword_up'))
+        self.add_animation('link_sword_down', self.resource_manager.get_images('link_sword_down'))
+        self.add_animation('link_sword_right', self.resource_manager.get_images('link_sword_right'))
+        self.add_animation('link_sword_left', self.resource_manager.get_images('link_sword_left'))
 
         # Group animations
         self.link_walk = ["link_walk_right", "link_walk_up", "link_walk_left", "link_walk_down"]
         self.link_push = ["link_push_right", "link_push_up", "link_push_left", "link_push_down"]
         self.link_shield_walk = ["link_shield_walk_right", "link_shield_walk_up", "link_shield_walk_left", "link_shield_walk_down"]
         self.link_use_shield = ["link_use_shield_right", "link_use_shield_up", "link_use_shield_left", "link_use_shield_down"]
+        self.link_sword = ["link_sword_right", "link_sword_up", "link_sword_left", "link_sword_down"]
 
         # Add sounds to Link
         self.resource_manager.add_sound('link_hop', SOUND_DIR + 'LA_Link_Jump.wav')
         self.resource_manager.add_sound('link_shield', SOUND_DIR + 'LA_Shield.wav')
         self.resource_manager.add_sound('link_fall', SOUND_DIR + 'LA_Fall.wav')
+        self.resource_manager.add_sound('link_sword_1', SOUND_DIR + 'LA_Sword_Slash1.wav')
+        self.resource_manager.add_sound('link_sword_2', SOUND_DIR + 'LA_Sword_Slash2.wav')
+        self.resource_manager.add_sound('link_sword_3', SOUND_DIR + 'LA_Sword_Slash3.wav')
+
+        self.sword_slashes = ['link_sword_1', 'link_sword_2', 'link_sword_3']
 
         # Configure Link's properties
         self.speed = 1.25  # 1.25
         self.movement = {0: (self.speed, 0), 1: (0, -self.speed), 2: (-self.speed, 0), 3: (0, self.speed)}
         self.direction = 3
         self.facing = 3
-        self.moves = []
-        self.change_animation = False
+        self.short_grass = ["short_grass", "short_forest_grass"]
+        self.effect_short_grass = ["effect_short_grass", "effect_short_forest_grass"]
+        self.in_grass = False
         self.shield = False
         self.left = None
         self.right = None
-        self.state = "walking"
-        self.hop_frame = 0
         self.controllable = True
         self.no_clip = False
         self.direction_held = False
+        self.body_rect = self.rect
         self.interaction_rect = None  # self.collision_rect.copy()
 
         # Link's States
@@ -110,24 +126,31 @@ class Link(engine.GameObject):
                                                  self.position[1]+self.collision_rect.y+self.collision_rect.height),
                                                 (self.collision_rect.width, 1))
 
+    def update_state(self, game_scene):
+        self._state.update(self, game_scene)
+        in_grass = False
+        grass_type = None
+
+        # Short grass effect
+        for game_object in game_scene.check_object_collision_objects(self):
+            object_type = game_object.object_type
+            if object_type in self.short_grass:
+                in_grass = True
+                grass_type = object_type
+        if in_grass and not self.in_grass:
+            if grass_type == self.short_grass[0]:
+                game_scene.insert_object(effects.ShortGrass(), self.position)
+            elif grass_type == self.short_grass[1]:
+                game_scene.insert_object(effects.ShortForestGrass(), self.position)
+            self.in_grass = True
+        elif not in_grass and self.in_grass:
+            for game_object in game_scene.list_objects():
+                if game_object.object_type in self.effect_short_grass:
+                    game_scene.remove_object(game_object)
+            self.in_grass = False
+
     def play_sound(self, key):
         self.resource_manager.play_sound(key)
-
-    def hop(self, moved):
-        if self.hop_frame < 3:
-            if self.animation_counter >= 7:
-                # print(str(self.hop_frame))
-                self.next_frame(1)
-                self.animation_counter = 0
-                self.hop_frame += 1
-        else:
-            self.set_animation('link_walk_down', 0)
-        if not moved:
-            self.controllable = True
-            # self.hopping = False
-            self.state = "walking"
-            self.change_animation = True
-            self.hop_frame = 0
 
     def set_speed(self, speed):
         self.speed = speed
@@ -136,6 +159,11 @@ class Link(engine.GameObject):
     def handle_input(self, game_scene):
         if self._state is not None:
             self._state.handle_input(self, game_scene)
+            self.update_interactions()
+
+    def handle_event(self, game_scene, event):
+        if self._state is not None:
+            self._state.handle_event(self, game_scene, event)
             self.update_interactions()
 
 
@@ -148,6 +176,8 @@ class WalkingState(engine.ObjectState):
         else:
             link.set_animation(link.link_shield_walk[link.facing], 0)
         link.controllable = True
+        link.animation_speed = 15
+        link.rect_offset = (0, 0)
 
     @staticmethod
     def handle_input(link, game_scene):
@@ -230,15 +260,31 @@ class WalkingState(engine.ObjectState):
                         link._state = HoppingState(link)
                     elif "hole" in collisions:
                         link._state = SlippingState(link)
+
+                    #TODO: Fix this
                     if "slow" in collisions:
                         link.set_speed(float(game_object.properties["slow"]))
                     else:
                         link.set_speed(float(1.25))
 
+            # Update and move short grass effect
+            if link.in_grass:
+                for game_object in game_scene.list_objects():
+                    if game_object.object_type in link.effect_short_grass:
+                        game_object.move(link.position)
+                        game_object.update()
+
             link.update()
 
-    def update(self, link):
-        pass
+    @staticmethod
+    def handle_event(link, game_scene, event):
+        if event.type == MOUSEBUTTONDOWN:
+            button = event.button
+            if button == 1:
+                link._state = SwordState(link)
+
+    def update(self, link, game_scene):
+        return
 
 
 class CollidingState(engine.ObjectState):
@@ -246,6 +292,8 @@ class CollidingState(engine.ObjectState):
         engine.ObjectState.__init__(self)
         link.set_animation(link.link_push[link.facing], 0)
         link.controllable = True
+        link.animation_speed = 15
+        link.rect_offset = (0, 0)
 
     @staticmethod
     def handle_input(link, game_scene):
@@ -302,53 +350,104 @@ class CollidingState(engine.ObjectState):
 
                 if not not_colliding_direction:
                     link.move(previous_position)
+
+            # Update and move short grass effect
+            if link.in_grass:
+                for game_object in game_scene.list_objects():
+                    if game_object.object_type in link.effect_short_grass:
+                        game_object.move(link.position)
+                        game_object.update()
+
             link.update()
         if not_colliding_any:
             link._state = WalkingState(link)
 
-    def update(self, game_object):
-        pass
+    @staticmethod
+    def handle_event(link, game_scene, event):
+        if event.type == MOUSEBUTTONDOWN:
+            button = event.button
+            if button == 0:
+                link._state = SwordState(link)
+
+    def update(self, link, game_scene):
+        return
 
 
 class HoppingState(engine.ObjectState):
     def __init__(self, link):
         engine.ObjectState.__init__(self)
-        link.set_animation(link.link_push[link.facing], 0)
+        link.set_animation("link_hop_down", 0)
         link.controllable = False
+        link.animation_counter = 0
+        link.play_sound("link_hop")
+        self.hop_frame = 0
+        link.animation_speed = 15
+        link.rect_offset = (0, 0)
 
-    def handle_input(self, game_object):
+    @staticmethod
+    def handle_input(link, game_scene):
+        return
+
+    @staticmethod
+    def handle_event(link, game_scene, event):
         pass
 
-    def update(self, game_object):
-        pass
+    def update(self, link, game_scene):
+        moved = False
+        for game_object in game_scene.check_object_collision_objects(link):
+            if game_object.solid or game_object.object_type == "jump":
+                link.increment((0, 1))
+                moved = True
+            if self.hop_frame < 3:
+                if link.animation_counter >= 7:
+                    link.next_frame(1)
+                    link.animation_counter = 0
+                    self.hop_frame += 1
+            else:
+                link.set_animation('link_walk_down', 0)
+        if not moved:
+            link._state = WalkingState(link)
 
 
+# TODO: Slipping should not be a state, can be in other states while slipping. Perhaps hole should pull player in.
 class SlippingState(engine.ObjectState):
-    def __init__(self):
+    def __init__(self, link):
         engine.ObjectState.__init__(self)
 
-    def handle_input(self, game_object):
+    @staticmethod
+    def handle_input(link, game_scene):
+        return
+
+    @staticmethod
+    def handle_event(link, game_scene, event):
         pass
 
-    def update(self, game_object):
-        pass
+    def update(self, link, game_scene):
+        return
 
 
 class FallingState(engine.ObjectState):
-    def __init__(self):
+    def __init__(self, link):
         engine.ObjectState.__init__(self)
 
-    def handle_input(self, game_object):
+    @staticmethod
+    def handle_input(link, game_scene):
+        return
+
+    @staticmethod
+    def handle_event(link, game_scene, event):
         pass
 
-    def update(self, game_object):
-        pass
+    def update(self, link, game_scene):
+        return
 
 
 class ShieldState(engine.ObjectState):
     def __init__(self, link):
         engine.ObjectState.__init__(self)
+        link.controllable = False
         link.set_animation(link.link_use_shield[link.facing], 0)
+        link.animation_speed = 15
 
     @staticmethod
     def handle_input(link, game_scene):
@@ -356,5 +455,64 @@ class ShieldState(engine.ObjectState):
         if not key[K_b]:
             link._state = WalkingState(link)
 
-    def update(self, game_object):
+    @staticmethod
+    def handle_event(link, game_scene, event):
         pass
+
+    def update(self, link, game_scene):
+        return
+
+
+class SwordState(engine.ObjectState):
+    def __init__(self, link):
+        engine.ObjectState.__init__(self)
+        link.controllable = False
+        link.set_animation(link.link_sword[link.facing], 0)
+        link.animation_frame = 0
+        self.holding = True
+        self.frame = 0
+        link.animation_speed = 5
+
+        # Play random slash sound
+        link.play_sound(link.sword_slashes[random.randrange(0, 3, 1)])
+
+        # Set rect offset
+        if link.facing == 0:
+            # link.rect = pygame.Rect((link.position[0], link.position[1]-16), (32, 32))
+            # link.body_rect = pygame.Rect((link.position[0], link.position[1]), (16, 16))
+            link.rect_offset = (0, -16)
+        elif link.facing == 1:
+            # link.rect = pygame.Rect((link`.position[0], link.position[1]-16), (32, 32))
+            # link.body_rect = pygame.Rect((link.position[0], link.position[1]), (16, 16))
+            link.rect_offset = (0, -16)
+        elif link.facing == 2:
+            # link.rect = pygame.Rect((link.position[0]-16, link.position[1]-16), (32, 32))
+            # link.body_rect = pygame.Rect((link.position[0], link.position[1]), (16, 16))
+            link.rect_offset = (-16, -16)
+        elif link.facing == 3:
+            # link.rect = pygame.Rect((link.position[0]-16, link.position[1]), (32, 32))
+            # link.body_rect = pygame.Rect((link.position[0], link.position[1]), (16, 16))
+            link.rect_offset = (-16, 0)
+
+    def handle_input(self, link, game_scene):
+        if self.holding:
+            if not pygame.mouse.get_pressed()[0]:
+                self.holding = False
+
+    @staticmethod
+    def handle_event(link, game_scene, event):
+        if event.type == MOUSEBUTTONDOWN:
+            button = event.button
+            if button == 1:
+                link._state = SwordState(link)
+
+    def update(self, link, game_scene):
+        if not self.holding:
+            if link.update():
+                self.frame += 1
+            if self.frame > 2:
+                link._state = WalkingState(link)
+        else:
+            if not self.frame > 1:
+                if link.update():
+                    self.frame += 1

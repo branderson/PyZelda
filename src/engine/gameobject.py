@@ -7,7 +7,7 @@ class ObjectState(object):
     def __init__(self):
         pass
 
-    def update(self, game_object):
+    def update(self, game_object, game_scene):
         pass
 
 
@@ -45,6 +45,8 @@ class GameObject(pygame.sprite.Sprite, object):
         else:
             self.collision_rect = collision_rect
         self.rect = self.images['image'][0][0].get_rect()
+        self._rect_offset = (0, 0)
+        self.rect_offset = (0, 0)
         # self.rect_scaled = self.rect.copy()
         # self.rect_draw = self.images['image'].get_rect()
         self.layer = layer
@@ -104,7 +106,7 @@ class GameObject(pygame.sprite.Sprite, object):
         self.current_image = self.images[key]
         self.current_key = key
         self.animation_frame = 0
-        self.rect = self.current_image[0][0].get_rect()
+        # self.rect = self.current_image[0][0].get_rect()
         # self.rotate(0)
 
     def remove_image(self, key):
@@ -378,3 +380,6 @@ class GameObject(pygame.sprite.Sprite, object):
                     self.next_frame(direction)
                     self.animation_counter = 0
                 self.frame_ready = False
+                return True
+            else:
+                return False
