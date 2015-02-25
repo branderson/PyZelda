@@ -82,8 +82,10 @@ class Link(engine.GameObject):
         self.resource_manager.add_sound('link_sword_1', SOUND_DIR + 'LA_Sword_Slash1.wav')
         self.resource_manager.add_sound('link_sword_2', SOUND_DIR + 'LA_Sword_Slash2.wav')
         self.resource_manager.add_sound('link_sword_3', SOUND_DIR + 'LA_Sword_Slash3.wav')
+        self.resource_manager.add_sound('link_sword_4', SOUND_DIR + 'LA_Sword_Slash4.wav')
+        self.resource_manager.add_sound('link_sword_charge', SOUND_DIR + 'LA_Sword_Charge.wav')
 
-        self.sword_slashes = ['link_sword_1', 'link_sword_2', 'link_sword_3']
+        self.sword_slashes = ['link_sword_1', 'link_sword_2', 'link_sword_3', 'link_sword_4']
 
         # Configure Link's properties
         self.speed = 1.25  # 1.25
@@ -470,28 +472,21 @@ class SwordState(engine.ObjectState):
         link.set_animation(link.link_sword[link.facing], 0)
         link.animation_frame = 0
         self.holding = True
+        self.charged = False
         self.frame = 0
         link.animation_speed = 5
 
         # Play random slash sound
-        link.play_sound(link.sword_slashes[random.randrange(0, 3, 1)])
+        link.play_sound(link.sword_slashes[random.randrange(0, 4, 1)])
 
         # Set rect offset
         if link.facing == 0:
-            # link.rect = pygame.Rect((link.position[0], link.position[1]-16), (32, 32))
-            # link.body_rect = pygame.Rect((link.position[0], link.position[1]), (16, 16))
             link.rect_offset = (0, -16)
         elif link.facing == 1:
-            # link.rect = pygame.Rect((link`.position[0], link.position[1]-16), (32, 32))
-            # link.body_rect = pygame.Rect((link.position[0], link.position[1]), (16, 16))
             link.rect_offset = (0, -16)
         elif link.facing == 2:
-            # link.rect = pygame.Rect((link.position[0]-16, link.position[1]-16), (32, 32))
-            # link.body_rect = pygame.Rect((link.position[0], link.position[1]), (16, 16))
             link.rect_offset = (-16, -16)
         elif link.facing == 3:
-            # link.rect = pygame.Rect((link.position[0]-16, link.position[1]), (32, 32))
-            # link.body_rect = pygame.Rect((link.position[0], link.position[1]), (16, 16))
             link.rect_offset = (-16, 0)
 
     def handle_input(self, link, game_scene):
@@ -516,3 +511,9 @@ class SwordState(engine.ObjectState):
             if not self.frame > 1:
                 if link.update():
                     self.frame += 1
+            else:
+                if link.update(False):
+                    self.frame += 1
+                    if self.frame == 50:
+                        self.charged = True
+                        link.play_sound('link_sword_charge')

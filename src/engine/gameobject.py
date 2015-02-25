@@ -379,6 +379,7 @@ class GameObject(pygame.sprite.Sprite, object):
                 if not rewind:
                     self.next_frame(direction)
                     self.animation_counter = 0
+            if self.frame_ready:
                 self.frame_ready = False
                 return True
             else:
