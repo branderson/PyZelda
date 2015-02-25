@@ -78,12 +78,14 @@ class Link(engine.GameObject):
         # Add sounds to Link
         self.resource_manager.add_sound('link_hop', SOUND_DIR + 'LA_Link_Jump.wav')
         self.resource_manager.add_sound('link_shield', SOUND_DIR + 'LA_Shield.wav')
-        self.resource_manager.add_sound('link_fall', SOUND_DIR + 'LA_Fall.wav')
+        self.resource_manager.add_sound('link_fall', SOUND_DIR + 'LA_Link_Fall.wav')
         self.resource_manager.add_sound('link_sword_1', SOUND_DIR + 'LA_Sword_Slash1.wav')
         self.resource_manager.add_sound('link_sword_2', SOUND_DIR + 'LA_Sword_Slash2.wav')
         self.resource_manager.add_sound('link_sword_3', SOUND_DIR + 'LA_Sword_Slash3.wav')
         self.resource_manager.add_sound('link_sword_4', SOUND_DIR + 'LA_Sword_Slash4.wav')
         self.resource_manager.add_sound('link_sword_charge', SOUND_DIR + 'LA_Sword_Charge.wav')
+        self.resource_manager.add_sound('link_sword_spin', SOUND_DIR + 'LA_Sword_Spin.wav')
+        self.resource_manager.add_sound('link_sword_tap', SOUND_DIR + 'LA_Sword_Tap.wav')
 
         self.sword_slashes = ['link_sword_1', 'link_sword_2', 'link_sword_3', 'link_sword_4']
 
@@ -473,6 +475,7 @@ class SwordState(engine.ObjectState):
         link.animation_frame = 0
         self.holding = True
         self.charged = False
+        self.spin = False
         self.frame = 0
         link.animation_speed = 5
 
@@ -494,12 +497,16 @@ class SwordState(engine.ObjectState):
             if not pygame.mouse.get_pressed()[0]:
                 self.holding = False
 
-    @staticmethod
-    def handle_event(link, game_scene, event):
+    def handle_event(self, link, game_scene, event):
         if event.type == MOUSEBUTTONDOWN:
             button = event.button
             if button == 1:
                 link._state = SwordState(link)
+        if self.charged:
+            if event.type == MOUSEBUTTONUP:
+                button = event.button
+                if button == 1:
+                    link._state = SwordSpinState(link)
 
     def update(self, link, game_scene):
         if not self.holding:
@@ -514,6 +521,31 @@ class SwordState(engine.ObjectState):
             else:
                 if link.update(False):
                     self.frame += 1
-                    if self.frame == 50:
+                    if self.frame == 25:
                         self.charged = True
                         link.play_sound('link_sword_charge')
+                        print("Charged")
+
+
+class SwordSpinState(engine.ObjectState):
+    def __init__(self, link):
+        engine.ObjectState.__init__(self)
+        link.controllable = False
+        link.animation_frame = 0
+        link.play_sound('link_sword_spin')
+        self.frame = 0
+
+    @staticmethod
+    def handle_input(link, game_scene):
+        return
+
+    @staticmethod
+    def handle_event(link, game_scene, event):
+        return
+
+    def update(self, link, game_scene):
+        print("Spinning")
+        if link.update():
+            self.frame += 1
+        if self.frame > 6:
+            link._state = WalkingState(link)

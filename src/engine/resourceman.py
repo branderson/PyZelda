@@ -88,10 +88,10 @@ class ResourceManager(object):
     def add_sound(self, key, filename):
         # if pyglet.media.have_avbin and not self.force_pygame:
         #     self.sounds[key] = pyglet.media.load(filename, streaming=False)
-        # if self.force_pyaudio:
-        #     self.sounds[key] = SoundStream(filename)
-        # else:
-        self.sounds[key] = pygame.mixer.Sound(filename)
+        if self.force_pyaudio:
+            self.sounds[key] = SoundStream(filename)
+        else:
+            self.sounds[key] = pygame.mixer.Sound(filename)
         # pass
 
     def remove_sound(self, key):
@@ -100,7 +100,6 @@ class ResourceManager(object):
     def play_sound(self, key):
         if not self.muted:
             self.sounds[key].play()
-            # pass
 
     def update_sound(self):
         if self.current_key is not None:
