@@ -15,6 +15,7 @@ class Map(object):
         self.object_tiles = {}
         self.object_properties = {}
         self.tile_set = Spritesheet(tile_set)  # Could eventually allow for multiple tile sets by making a list
+        # TODO: Make spritesheet size independent of class
         self.resource_manager.add_spritesheet_strip_offsets('tile_set', self.tile_set, (1, 1), 600, 24, (16, 16), 1, 1)
 
         # Read the XML file

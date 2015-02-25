@@ -22,16 +22,8 @@ GameObject
         Same with rotate
     Add easy way to store text in objects
     Tint will be infinitely faster if done by creating a colored surface and blitting it to the objects image.
-Spritesheet
-    Add methods for spacing between sprites, strips that are multiple lines, etc
-Implement resource dictionaries
-    Sprite/spritesheet functionality implemented
-    Need a way to load fonts at the proper size
-    Don't render fonts a lot
 Update the enginedocs
     Append if active stuff to them
-Implement dirty rect animation
-    May not be feasible due to abstraction of views/scrolling inherent to engine
 Look into possibly using cairo for final drawing
 Game
     Make link still able to move while colliding
@@ -39,3 +31,5 @@ Game
     Move collision box for water one square down
     Fix animation speeds
     Maybe make two different collision arrays so I'm not always switching and reloading them multiple times/frame
+
+    Handle collisions for grass and stuff that doesn't involve player in main, not in player code

@@ -3,6 +3,14 @@ import pygame
 import random
 
 
+class ObjectState(object):
+    def __init__(self):
+        pass
+
+    def update(self, game_object, game_scene):
+        pass
+
+
 class GameObject(pygame.sprite.Sprite, object):
     def __init__(self, image=None, layer=0, masks=None, collision_rect=None, angle=0, position=(0, 0),
                  handle_collisions=False, object_type=None, properties=None, visible=True, persistent=False,
@@ -37,13 +45,18 @@ class GameObject(pygame.sprite.Sprite, object):
         else:
             self.collision_rect = collision_rect
         self.rect = self.images['image'][0][0].get_rect()
+        self._rect_offset = (0, 0)
+        self.rect_offset = (0, 0)
         # self.rect_scaled = self.rect.copy()
         # self.rect_draw = self.images['image'].get_rect()
         self.layer = layer
         self.masks = []
         # self.images['image'] = self.image
         self.angle = angle
+        self.scene_position = None
         self.position = position
+        self.states = {}
+        self._state = None
         self.handle_collisions = handle_collisions
         self.object_type = object_type
         self.persistent = persistent
@@ -93,7 +106,7 @@ class GameObject(pygame.sprite.Sprite, object):
         self.current_image = self.images[key]
         self.current_key = key
         self.animation_frame = 0
-        self.rect = self.current_image[0][0].get_rect()
+        # self.rect = self.current_image[0][0].get_rect()
         # self.rotate(0)
 
     def remove_image(self, key):
@@ -141,6 +154,17 @@ class GameObject(pygame.sprite.Sprite, object):
             return True
         else:
             return False
+
+    def move(self, coordinate):
+        self.updated = True
+        if coordinate is not None:
+            self.position = coordinate
+            return True
+        else:
+            return False
+
+    def increment(self, increment):
+        return self.move((self.position[0] + increment[0], self.position[1] + increment[1]))
 
     def destroy(self):
         del self
@@ -202,15 +226,6 @@ class GameObject(pygame.sprite.Sprite, object):
                 #                                                                  (int(self.images[image_list][image].get_width()*scaling[0]),
                 #                                                                   int(self.images[image_list][image].get_height()*scaling[1])))
 
-    # def scale(self, x_scale, y_scale):
-    # TODO: Implement GameObject.scale()
-    #     self.image_scaled = pygame.transform.scale(self.image, (int(self.image.get_width()*x_scale),
-    #                                                             int(self.image.get_height()*y_scale)))
-    #     # self.rect_scaled.inflate_ip(-x_scale, -y_scale)
-    #     self.rect = pygame.Rect(self.rect.topleft, (int(self.rect.width*x_scale), int(self.rect.height*y_scale)))
-    #     # print(str(self.rect_scaled.x) + " " + str(self.rect_scaled.y))
-    #     # pygame.quit()
-
     def rotate(self, angle):
         self.angle += angle
         rect = self.rect
@@ -244,35 +259,40 @@ class GameObject(pygame.sprite.Sprite, object):
             return input_surface
         else:
             surface = input_surface.copy()
-            surface.lock()
-            for x in range(0, surface.get_width()):
-                for y in range(0, surface.get_height()):
-                    pixel = surface.get_at((x, y))
-                    if pixel != colorkey:
-                        new_r = pixel.r + tint[0]
-                        if new_r > 255:
-                            new_r = 255
-                        elif new_r < 0:
-                            new_r = 0
-                        new_g = pixel.g + tint[1]
-                        if new_g > 255:
-                            new_g = 255
-                        elif new_g < 0:
-                            new_g = 0
-                        new_b = pixel.b + tint[2]
-                        if new_b > 255:
-                            new_b = 255
-                        elif new_b < 0:
-                            new_b = 0
-                        new_a = pixel.a
-                        if len(tint) == 4:
-                            new_a = pixel.a + tint[3]
-                            if new_a > 255:
-                                new_a = 255
-                            elif new_a < 0:
-                                new_a = 0
-                        surface.set_at((x, y), (new_r, new_g, new_b, new_a))
-            surface.unlock()
+            tint_surface = pygame.Surface((surface.get_width(), surface.get_height()))
+            tint_surface.fill(tint)
+            surface.blit(tint_surface, (0, 0))
+        # else:
+        #     surface = input_surface.copy()
+        #     surface.lock()
+        #     for x in range(0, surface.get_width()):
+        #         for y in range(0, surface.get_height()):
+        #             pixel = surface.get_at((x, y))
+        #             if pixel != colorkey:
+        #                 new_r = pixel.r + tint[0]
+        #                 if new_r > 255:
+        #                     new_r = 255
+        #                 elif new_r < 0:
+        #                     new_r = 0
+        #                 new_g = pixel.g + tint[1]
+        #                 if new_g > 255:
+        #                     new_g = 255
+        #                 elif new_g < 0:
+        #                     new_g = 0
+        #                 new_b = pixel.b + tint[2]
+        #                 if new_b > 255:
+        #                     new_b = 255
+        #                 elif new_b < 0:
+        #                     new_b = 0
+        #                 new_a = pixel.a
+        #                 if len(tint) == 4:
+        #                     new_a = pixel.a + tint[3]
+        #                     if new_a > 255:
+        #                         new_a = 255
+        #                     elif new_a < 0:
+        #                         new_a = 0
+        #                 surface.set_at((x, y), (new_r, new_g, new_b, new_a))
+        #     surface.unlock()
             return surface
 
     @staticmethod
@@ -347,6 +367,9 @@ class GameObject(pygame.sprite.Sprite, object):
         return surface
 
     def update(self, can_update=True, rewind=False, direction=1):
+        if self._state is not None:
+            # self._state.update(self)
+            pass
         if self.animation_speed > 0:
             if not rewind:
                 self.animation_counter += 1
@@ -357,3 +380,6 @@ class GameObject(pygame.sprite.Sprite, object):
                     self.next_frame(direction)
                     self.animation_counter = 0
                 self.frame_ready = False
+                return True
+            else:
+                return False
