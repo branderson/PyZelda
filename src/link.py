@@ -524,7 +524,6 @@ class SwordState(engine.ObjectState):
                     if self.frame == 25:
                         self.charged = True
                         link.play_sound('link_sword_charge')
-                        print("Charged")
 
 
 class SwordSpinState(engine.ObjectState):
@@ -544,7 +543,6 @@ class SwordSpinState(engine.ObjectState):
         return
 
     def update(self, link, game_scene):
-        print("Spinning")
         if link.update():
             self.frame += 1
         if self.frame > 6:

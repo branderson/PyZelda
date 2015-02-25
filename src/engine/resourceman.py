@@ -1,5 +1,6 @@
 __author__ = 'brad'
 import pygame
+import pyaudio
 # import pyglet.media
 from soundstream import SoundStream
 
@@ -16,6 +17,10 @@ class ResourceManager(object):
         self.force_pyaudio = force_pyaudio
         self.muted = muted
         self.current_key = None
+        self.pya = pyaudio.PyAudio()
+        self.sound_channels = 4
+        self.current_sounds = [SoundStream(self.pya) for x in xrange(self.sound_channels)]
+        self.sound_queue_index = 0
 
     def add_image(self, key, filename):
         try:
@@ -62,7 +67,7 @@ class ResourceManager(object):
         # if pyglet.media.have_avbin and not self.force_pygame:
         #     self.music[key] = pyglet.media.load(filename)
         if self.force_pyaudio:
-            self.music[key] = SoundStream(filename)
+            self.music[key] = SoundStream(self.pya, filename)
         else:
             self.music[key] = filename
 
@@ -89,7 +94,7 @@ class ResourceManager(object):
         # if pyglet.media.have_avbin and not self.force_pygame:
         #     self.sounds[key] = pyglet.media.load(filename, streaming=False)
         if self.force_pyaudio:
-            self.sounds[key] = SoundStream(filename)
+            self.sounds[key] = filename  # SoundStream(filename, self.pya)
         else:
             self.sounds[key] = pygame.mixer.Sound(filename)
         # pass
@@ -99,11 +104,22 @@ class ResourceManager(object):
 
     def play_sound(self, key):
         if not self.muted:
-            self.sounds[key].play()
+            if self.force_pyaudio:
+                self.current_sounds[self.sound_queue_index].play(self.sounds[key])
+                self.sound_queue_index += 1
+                if self.sound_queue_index > self.sound_channels - 1:
+                    self.sound_queue_index = 0
+                # if len(self.current_sounds) >= 4:
+                #     print(str(len(self.current_sounds)))
+                #     self.current_sounds[0].destroy()
+                #     self.current_sounds.remove(self.current_sounds[0])
+            # self.current_sounds.append(self.sounds[key])
 
     def update_sound(self):
         if self.current_key is not None:
             if self.force_pyaudio:
-                self.music[self.current_key].update()
-            else:
-                pass
+                if self.current_key is not None:
+                    self.music[self.current_key].update()
+        if self.force_pyaudio:
+            for sound in self.current_sounds:
+                sound.update()
