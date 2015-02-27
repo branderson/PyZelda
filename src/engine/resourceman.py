@@ -1,8 +1,8 @@
 __author__ = 'brad'
 import pygame
 import pyaudio
-# import pyglet.media
 from soundstream import SoundStream
+from soundstream import WaveFile
 
 
 class ResourceManager(object):
@@ -19,7 +19,7 @@ class ResourceManager(object):
         self.current_key = None
         self.pya = pyaudio.PyAudio()
         self.sound_channels = 4
-        self.current_sounds = [SoundStream(self.pya) for x in xrange(self.sound_channels)]
+        self.current_sounds = [SoundStream(self.pya, streaming=False) for x in xrange(self.sound_channels)]
         self.sound_queue_index = 0
 
     def add_image(self, key, filename):
@@ -94,7 +94,7 @@ class ResourceManager(object):
         # if pyglet.media.have_avbin and not self.force_pygame:
         #     self.sounds[key] = pyglet.media.load(filename, streaming=False)
         if self.force_pyaudio:
-            self.sounds[key] = filename  # SoundStream(filename, self.pya)
+            self.sounds[key] = WaveFile(filename)
         else:
             self.sounds[key] = pygame.mixer.Sound(filename)
         # pass
@@ -109,10 +109,8 @@ class ResourceManager(object):
                 self.sound_queue_index += 1
                 if self.sound_queue_index > self.sound_channels - 1:
                     self.sound_queue_index = 0
-                # if len(self.current_sounds) >= 4:
-                #     print(str(len(self.current_sounds)))
-                #     self.current_sounds[0].destroy()
-                #     self.current_sounds.remove(self.current_sounds[0])
+            else:
+                self.sounds[key].play()
             # self.current_sounds.append(self.sounds[key])
 
     def update_sound(self):

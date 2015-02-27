@@ -87,7 +87,7 @@ def main():
     resource_manager.add_music('overworld', MUSIC_DIR + '10. Overworld' + EXTENSION)
     resource_manager.add_music('mabe_village', MUSIC_DIR + '11. Mabe Village' + EXTENSION)
     resource_manager.add_music('mysterious_forest', MUSIC_DIR + '16. Mysterious Forest' + EXTENSION)
-    resource_manager.play_music('mabe_village')
+    # resource_manager.play_music('mabe_village')
 
     # Sounds
 

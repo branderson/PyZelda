@@ -189,10 +189,6 @@ class WalkingState(engine.ObjectState):
         moves = []
         moved = False
 
-        if key[K_b] and link.shield:
-            link.play_sound('link_shield')
-            link._state = ShieldState(link)
-
         # Gather movement directions
         if not key[K_a] and not key[K_d] and not key[K_w] and not key[K_s] and not key[K_b]:
             link.set_animation_frame(0)
@@ -286,6 +282,9 @@ class WalkingState(engine.ObjectState):
             button = event.button
             if button == 1:
                 link._state = SwordState(link)
+            if button == 3:
+                if link.shield:
+                    link._state = ShieldState(link)
 
     def update(self, link, game_scene):
         return
@@ -451,12 +450,14 @@ class ShieldState(engine.ObjectState):
         engine.ObjectState.__init__(self)
         link.controllable = False
         link.set_animation(link.link_use_shield[link.facing], 0)
+        link.play_sound('link_shield')
         link.animation_speed = 15
 
     @staticmethod
     def handle_input(link, game_scene):
-        key = pygame.key.get_pressed()
-        if not key[K_b]:
+        mouse = pygame.mouse.get_pressed()
+        # print(str(mouse))
+        if not mouse[2]:
             link._state = WalkingState(link)
 
     @staticmethod

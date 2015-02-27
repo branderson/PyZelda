@@ -23,3 +23,4 @@ from resourceman import ResourceManager
 from spritesheet import Spritesheet
 from map import Map
 from soundstream import SoundStream
+from soundstream import WaveFile
