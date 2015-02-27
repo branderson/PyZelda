@@ -1,6 +1,6 @@
 __author__ = 'brad'
 
-import engine
+import src.engine as engine
 
 RESOURCE_DIR = '../resources/'
 SPRITE_DIR = RESOURCE_DIR + 'sprite/'

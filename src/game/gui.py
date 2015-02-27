@@ -1,6 +1,6 @@
 __author__ = 'brad'
 
-import engine
+import src.engine as engine
 import pygame
 
 RESOURCE_DIR = '../resources/'

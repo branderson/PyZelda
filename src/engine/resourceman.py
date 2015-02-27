@@ -1,8 +1,10 @@
 __author__ = 'brad'
 import pygame
 import pyaudio
-from soundstream import SoundStream
-from soundstream import WaveFile
+import backend
+
+from backend import SoundStream
+from backend import WaveFile
 
 
 class ResourceManager(object):

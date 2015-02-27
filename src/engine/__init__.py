@@ -1,3 +1,5 @@
+from src.engine.backend import soundstream
+
 __author__ = 'brad'
 
 # Import engine files
@@ -9,7 +11,6 @@ import gameobject
 import resourceman
 import spritesheet
 import map
-import soundstream
 
 
 # Import engine level classes
@@ -22,5 +23,5 @@ from gameobject import ObjectState
 from resourceman import ResourceManager
 from spritesheet import Spritesheet
 from map import Map
-from soundstream import SoundStream
-from soundstream import WaveFile
+from src.engine.backend.soundstream import SoundStream
+from src.engine.backend.soundstream import WaveFile

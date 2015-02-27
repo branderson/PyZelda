@@ -1,14 +1,13 @@
 #!/usr/bin/env python
+from src.game import gui
+
 __author__ = 'brad'
 import sys
 import pygame
-import engine
-import specialtiles
-import effects
-import gui
-from link import Link
-
 from pygame.locals import *
+
+import engine
+import game
 
 # Screen constants
 COORDINATE_WIDTH = 160
@@ -59,7 +58,7 @@ def main():
     pause_surface = engine.CoordinateSurface(pygame.Rect((0, 0), (SCREEN_WIDTH, SCREEN_HEIGHT)),
                                              (COORDINATE_WIDTH, COORDINATE_HEIGHT))
 
-    hud = gui.HUD((SCREEN_WIDTH, SCREEN_HEIGHT))
+    hud = game.gui.HUD((SCREEN_WIDTH, SCREEN_HEIGHT))
 
     game_scene = engine.Scene((2560, 2048))
     pause_scene = engine.Scene((COORDINATE_WIDTH, COORDINATE_HEIGHT))
@@ -110,7 +109,7 @@ def run_game():
 
     textboxes = []
 
-    link = Link(0)
+    link = game.link.Link(0)
     camera = engine.GameObject(collision_rect=(pygame.Rect((0, 0), (COORDINATE_WIDTH, COORDINATE_HEIGHT))),
                                handle_collisions=True, object_type="camera", persistent=True)
     camera.collision_rect.center = camera.rect.center
@@ -234,7 +233,7 @@ def handle_event(event):
                         justify = "center"
                         if "justify" in game_object.properties:
                             justify = game_object.properties["justify"]
-                        textboxes.append(gui.TextBox(game_object.properties["text"], SCREEN_SIZE, COORDINATE_SIZE, justify))
+                        textboxes.append(game.gui.TextBox(game_object.properties["text"], SCREEN_SIZE, COORDINATE_SIZE, justify))
             elif key == K_g:
                 link.shield = not link.shield
                 if link.shield:
