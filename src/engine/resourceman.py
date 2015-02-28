@@ -2,15 +2,28 @@ __author__ = 'brad'
 import pygame
 import pyaudio
 import backend
+from ctypes import *
+from contextlib import contextmanager
 
-from backend import SoundStream
-from backend import WaveFile
+ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
+
+def py_error_handler(filename, line, function, err, fmt):
+    pass
+
+c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
+
+@contextmanager
+def noalsaerr():
+    asound = cdll.LoadLibrary('libasound.so.2')
+    asound.snd_lib_error_set_handler(c_error_handler)
+    yield
+    asound.snd_lib_error_set_handler(None)
 
 
 class ResourceManager(object):
     def __init__(self, force_pygame=True, force_pyaudio=True, muted=False):
         pygame.font.init()
-        pygame.mixer.init()
+        # pygame.mixer.init()
         self.sprites = {}
         self.music = {}
         self.sounds = {}
@@ -19,9 +32,10 @@ class ResourceManager(object):
         self.force_pyaudio = force_pyaudio
         self.muted = muted
         self.current_key = None
-        self.pya = pyaudio.PyAudio()
+        with noalsaerr():
+            self.pya = pyaudio.PyAudio()
         self.sound_channels = 4
-        self.current_sounds = [SoundStream(self.pya, streaming=False) for x in xrange(self.sound_channels)]
+        self.current_sounds = [backend.Sound(self.pya) for x in xrange(self.sound_channels)]
         self.sound_queue_index = 0
 
     def add_image(self, key, filename):
@@ -69,7 +83,7 @@ class ResourceManager(object):
         # if pyglet.media.have_avbin and not self.force_pygame:
         #     self.music[key] = pyglet.media.load(filename)
         if self.force_pyaudio:
-            self.music[key] = SoundStream(self.pya, filename)
+            self.music[key] = backend.SoundStream(self.pya, filename)
         else:
             self.music[key] = filename
 
@@ -96,7 +110,7 @@ class ResourceManager(object):
         # if pyglet.media.have_avbin and not self.force_pygame:
         #     self.sounds[key] = pyglet.media.load(filename, streaming=False)
         if self.force_pyaudio:
-            self.sounds[key] = WaveFile(filename)
+            self.sounds[key] = backend.WaveFile(filename)
         else:
             self.sounds[key] = pygame.mixer.Sound(filename)
         # pass
@@ -120,6 +134,3 @@ class ResourceManager(object):
             if self.force_pyaudio:
                 if self.current_key is not None:
                     self.music[self.current_key].update()
-        if self.force_pyaudio:
-            for sound in self.current_sounds:
-                sound.update()

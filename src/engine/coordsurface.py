@@ -1,9 +1,9 @@
 __author__ = 'brad'
 
-import pygame
+import backend
 
 
-class CoordinateSurface(pygame.Surface):
+class CoordinateSurface(backend.Surface):
 
     def __init__(self, rect, coordinate_size):
         # This part should be cleaned up
@@ -14,9 +14,9 @@ class CoordinateSurface(pygame.Surface):
         :rtype : CoordinateSurface
         """
         try:
-            pygame.Surface.__init__(self, (rect.width, rect.height), flags=pygame.SRCALPHA | pygame.HWSURFACE)
+            backend.Surface.__init__(self, (rect.width, rect.height), flags=3)
         except:
-            pygame.Surface.__init__(self, (rect[0], rect[1]), flags=pygame.SRCALPHA | pygame.HWSURFACE)
+            backend.Surface.__init__(self, (rect[0], rect[1]), flags=3)
         self.coordinate_array = {}
         self.layers = []
         self.x_scale = 1.
@@ -199,7 +199,7 @@ class CoordinateSurface(pygame.Surface):
         self.unlock()
 
     def update_screen_coordinates(self, new_size):
-        pygame.Surface.__init__(self, new_size, flags=pygame.SRCALPHA)
+        backend.Surface.__init__(self, new_size, flags=1)
         self.x_scale = float(self.get_width())/float(self.coordinate_width)
         self.y_scale = float(self.get_height())/float(self.coordinate_height)
 

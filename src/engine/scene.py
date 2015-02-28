@@ -1,8 +1,7 @@
 __author__ = 'brad'
 
-import pygame
 import math
-from coordsurface import CoordinateSurface
+import pygame
 
 
 class Scene(object):
@@ -245,9 +244,6 @@ class Scene(object):
                             moved_object_rect = pygame.Rect((math.ceil(position[0]) + game_object._rect_offset[0],
                                                              math.ceil(position[1]) + game_object._rect_offset[1]),
                                                             (game_object.rect.width, game_object.rect.height))
-                            # frame_object_rect = pygame.Rect((math.ceil(position[0]) + game_object.rect_offset[0],
-                            #                                  math.ceil(position[1]) + game_object.rect_offset[1]),
-                            #                                 (frame_rect.width, frame_rect.height))
                             other_object_rect = pygame.Rect((math.ceil(other_object.scene_position[0]) +
                                                              other_object._rect_offset[0],
                                                              math.ceil(other_object.scene_position[1]) +
@@ -261,9 +257,6 @@ class Scene(object):
                         moved_object_rect = pygame.Rect((math.floor(position[0]) + game_object._rect_offset[0],
                                                          math.floor(position[1]) + game_object._rect_offset[1]),
                                                         (game_object.rect.width, game_object.rect.height))
-                        # frame_object_rect = pygame.Rect((math.floor(position[0]) + game_object.rect_offset[0],
-                        #                                  math.floor(position[1]) + game_object.rect_offset[1]),
-                        #                                 (frame_rect.width, frame_rect.height))
                         other_object_rect = pygame.Rect((math.floor(other_object.scene_position[0]) +
                                                          other_object._rect_offset[0],
                                                          math.floor(other_object.scene_position[1]) +
@@ -295,11 +288,6 @@ class Scene(object):
         for game_object in self.list_objects():
             # objects.append(game_object)
             if game_object.handle_collisions or self.handle_all_collisions:  # and game_object.updated:
-                # collide_rect = pygame.Rect((self.check_position(game_object)[0] + game_object.rect.width/2 -
-                #                             game_object.collision_rect.width/2, self.check_position(game_object)[1] +
-                #                             game_object.rect.height/2 - game_object.collision_rect.height/2),
-                #                            (game_object.collision_rect.width,
-                #                             game_object.collision_rect.height))
                 collide_rect = pygame.Rect((game_object.scene_position[0]+game_object.collision_rect.x,
                                             game_object.scene_position[1]+game_object.collision_rect.y),
                                            (game_object.collision_rect.width, game_object.collision_rect.height))

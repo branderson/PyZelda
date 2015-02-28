@@ -178,11 +178,6 @@ class GameObject(pygame.sprite.Sprite, object):
 
     def draw(self, surface, (x, y), invert=False, tint=(0, 0, 0), colorkey=None):   # , x_scale, y_scale, x, y):
         # TODO: May need to change image to current_image. Also go through and make sure using right image consistently
-        # rect_scaled = pygame.Rect((x-self.rect.x*x_scale, y-self.rect.y*y_scale), (int(self.rect.width*x_scale),
-        #                                                                            int(self.rect.height*y_scale)))
-        # surface.blit(pygame.transform.scale(self.image, (int(self.image.get_width()*x_scale),
-        #                                                  int(self.image.get_height()*y_scale))), rect_scaled
-            # print("drawing " + self.object_type)
         key = (surface.x_scale, surface.y_scale)
         try:
             if (invert and not self.inverted) or (not invert and self.inverted):
@@ -214,7 +209,7 @@ class GameObject(pygame.sprite.Sprite, object):
         self.updated_sprite = False
 
     def scale_to_view(self, scaling):
-        self.updated = True
+        # self.updated = True
         # print("Scaling")
         for image_list in self.images.keys():
             self.images[image_list][scaling] = []

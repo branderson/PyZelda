@@ -36,10 +36,10 @@ class Link(engine.GameObject):
         self.resource_manager.add_spritesheet_strip_offsets('link_use_shield_right', link_sheet, (96, 48), 2, 2, (16, 16), 0, 0, (64, 64, 192))
         self.resource_manager.add_spritesheet_strip_offsets('link_hop_down', link_sheet, (0, 64), 3, 3, (16, 16), 0, 0, (64, 64, 192))
         self.resource_manager.add_spritesheet_strip_offsets('link_fall', link_sheet, (0, 96), 3, 3, (16, 16), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_sword_down', link_sheet, (96, 112), 3, 3, (32, 32), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_sword_up', link_sheet, (192, 112), 3, 3, (32, 32), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_sword_left', link_sheet, (0, 112), 3, 3, (32, 32), 0, 0, (64, 64, 192))
-        self.resource_manager.add_spritesheet_strip_offsets('link_sword_right', link_sheet, (288, 112), 3, 3, (32, 32), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_sword_down', link_sheet, (32, 112), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_sword_up', link_sheet, (64, 112), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_sword_left', link_sheet, (0, 112), 2, 2, (16, 16), 0, 0, (64, 64, 192))
+        self.resource_manager.add_spritesheet_strip_offsets('link_sword_right', link_sheet, (96, 112), 2, 2, (16, 16), 0, 0, (64, 64, 192))
         engine.GameObject.__init__(self, self.resource_manager.get_images('link_walk_down'), layer,
                                    collision_rect=pygame.Rect((3, 4), (10, 11)),
                                    handle_collisions=True, object_type="player", persistent=True)
@@ -188,6 +188,9 @@ class WalkingState(engine.ObjectState):
         key = pygame.key.get_pressed()
         moves = []
         moved = False
+        # mouse = pygame.mouse.get_pressed()
+        # if mouse[2]:
+        #     link._state = ShieldState(link)
 
         # Gather movement directions
         if not key[K_a] and not key[K_d] and not key[K_w] and not key[K_s] and not key[K_b]:
@@ -452,17 +455,98 @@ class ShieldState(engine.ObjectState):
         link.set_animation(link.link_use_shield[link.facing], 0)
         link.play_sound('link_shield')
         link.animation_speed = 15
+        link.rect_offset = (0, 0)
 
     @staticmethod
     def handle_input(link, game_scene):
+        key = pygame.key.get_pressed()
+        moves = []
+        moved = False
         mouse = pygame.mouse.get_pressed()
         # print(str(mouse))
         if not mouse[2]:
             link._state = WalkingState(link)
+        # Gather movement directions
+        if not key[K_a] and not key[K_d] and not key[K_w] and not key[K_s] and not key[K_b]:
+            link.set_animation_frame(0)
+        else:
+            if key[K_a] and not key[K_d]:
+                if not key[K_w] and not key[K_s] and link.facing != 2:
+                    link.facing = 2
+                    link.set_animation(link.link_use_shield[link.facing], 0)
+                link.direction = 2
+                moves.append(2)
+                moved = True
+            elif key[K_d] and not key[K_a]:
+                if not key[K_w] and not key[K_s] and link.facing != 0:
+                    link.facing = 0
+                    link.set_animation(link.link_use_shield[link.facing], 0)
+                link.direction = 0
+                moves.append(0)
+                moved = True
+            if key[K_s] and not key[K_w]:
+                if not key[K_d] and not key[K_a] and link.facing != 3:
+                    link.facing = 3
+                    link.set_animation(link.link_use_shield[link.facing], 0)
+                link.direction = 3
+                moves.append(3)
+                moved = True
+            elif key[K_w] and not key[K_s]:
+                if not key[K_d] and not key[K_a] and link.facing != 1:
+                    link.facing = 1
+                    link.set_animation(link.link_use_shield[link.facing], 0)
+                link.direction = 1
+                moves.append(1)
+                moved = True
+
+        # Execute movements
+        if moved:
+            for move_direction in moves:
+                previous_position = link.position
+                link.increment(link.movement[move_direction])
+                # Deal with collisions
+                if not link.no_clip:
+                    collisions = []
+                    # Figure out what link is colliding with
+                    for game_object in game_scene.check_object_collision_objects(link):
+                        # Regular collisions, stop movement
+                        if game_object.solid:
+                            collisions.append("solid")
+                        if "slow" in game_object.properties:
+                            collisions.append("slow")
+                        if game_object.object_type == "hole":
+                            collisions.append("hole")
+                        if game_object.object_type == "jump":
+                            collisions.append("jump")
+                    if "solid" in collisions:
+                        link.move(previous_position)
+                        # link._state = CollidingState(link)
+                    elif "jump" in collisions:
+                        link._state = HoppingState(link)
+                    elif "hole" in collisions:
+                        link._state = SlippingState(link)
+
+                    #TODO: Fix this
+                    if "slow" in collisions:
+                        link.set_speed(float(game_object.properties["slow"]))
+                    else:
+                        link.set_speed(float(1.25))
+
+            # Update and move short grass effect
+            if link.in_grass:
+                for game_object in game_scene.list_objects():
+                    if game_object.object_type in link.effect_short_grass:
+                        game_object.move(link.position)
+                        game_object.update()
+
+            link.update()
 
     @staticmethod
     def handle_event(link, game_scene, event):
-        pass
+        if event.type == MOUSEBUTTONDOWN:
+            button = event.button
+            if button == 1:
+                link._state = SwordState(link)
 
     def update(self, link, game_scene):
         return
@@ -471,60 +555,152 @@ class ShieldState(engine.ObjectState):
 class SwordState(engine.ObjectState):
     def __init__(self, link):
         engine.ObjectState.__init__(self)
-        link.controllable = False
         link.set_animation(link.link_sword[link.facing], 0)
-        link.animation_frame = 0
         self.holding = True
         self.charged = False
         self.spin = False
         self.frame = 0
-        link.animation_speed = 5
+        link.animation_speed = 15
+        link.rect_offset = (0, 0)
 
         # Play random slash sound
         link.play_sound(link.sword_slashes[random.randrange(0, 4, 1)])
 
         # Set rect offset
-        if link.facing == 0:
-            link.rect_offset = (0, -16)
-        elif link.facing == 1:
-            link.rect_offset = (0, -16)
-        elif link.facing == 2:
-            link.rect_offset = (-16, -16)
-        elif link.facing == 3:
-            link.rect_offset = (-16, 0)
+        # if link.facing == 0:
+        #     link.rect_offset = (0, -16)
+        # elif link.facing == 1:
+        #     link.rect_offset = (0, -16)
+        # elif link.facing == 2:
+        #     link.rect_offset = (-16, -16)
+        # elif link.facing == 3:
+        #     link.rect_offset = (-16, 0)
 
     def handle_input(self, link, game_scene):
-        if self.holding:
-            if not pygame.mouse.get_pressed()[0]:
-                self.holding = False
+        mouse = pygame.mouse.get_pressed()
+        # print(str(mouse))
+        if not mouse[0]:
+            self.holding = False
 
     def handle_event(self, link, game_scene, event):
         if event.type == MOUSEBUTTONDOWN:
             button = event.button
             if button == 1:
                 link._state = SwordState(link)
-        if self.charged:
-            if event.type == MOUSEBUTTONUP:
-                button = event.button
-                if button == 1:
-                    link._state = SwordSpinState(link)
 
     def update(self, link, game_scene):
-        if not self.holding:
+        if self.frame <= 1:
             if link.update():
                 self.frame += 1
-            if self.frame > 2:
-                link._state = WalkingState(link)
-        else:
-            if not self.frame > 1:
-                if link.update():
-                    self.frame += 1
+        if self.frame > 1:
+            self.frame += 1
+        if self.frame > 10:
+            if not self.holding:
+                mouse = pygame.mouse.get_pressed()
+                if mouse[2]:
+                    link._state = ShieldState(link)
+                else:
+                    link._state = WalkingState(link)
             else:
-                if link.update(False):
-                    self.frame += 1
-                    if self.frame == 25:
-                        self.charged = True
-                        link.play_sound('link_sword_charge')
+                link._state = SwordChargeState(link)
+
+
+class SwordChargeState(engine.ObjectState):
+    def __init__(self, link):
+        engine.ObjectState.__init__(self)
+        if link.shield:
+            link.set_animation(link.link_shield_walk[link.facing], 0)
+        else:
+            link.set_animation(link.link_walk[link.facing], 0)
+        link.animation_frame = 0
+        self.holding = True
+        self.charged = False
+        self.spin = False
+        self.frame = 0
+        link.animation_speed = 15
+
+    @staticmethod
+    def handle_input(link, game_scene):
+        key = pygame.key.get_pressed()
+        moves = []
+        moved = False
+        # Gather movement directions
+        if not key[K_a] and not key[K_d] and not key[K_w] and not key[K_s] and not key[K_b]:
+            link.set_animation_frame(0)
+        else:
+            if key[K_a] and not key[K_d]:
+                link.direction = 2
+                moves.append(2)
+                moved = True
+            elif key[K_d] and not key[K_a]:
+                link.direction = 0
+                moves.append(0)
+                moved = True
+            if key[K_s] and not key[K_w]:
+                link.direction = 3
+                moves.append(3)
+                moved = True
+            elif key[K_w] and not key[K_s]:
+                link.direction = 1
+                moves.append(1)
+                moved = True
+
+        # Execute movements
+        if moved:
+            for move_direction in moves:
+                previous_position = link.position
+                link.increment(link.movement[move_direction])
+                # Deal with collisions
+                if not link.no_clip:
+                    collisions = []
+                    # Figure out what link is colliding with
+                    for game_object in game_scene.check_object_collision_objects(link):
+                        # Regular collisions, stop movement
+                        if game_object.solid:
+                            collisions.append("solid")
+                        if "slow" in game_object.properties:
+                            collisions.append("slow")
+                        if game_object.object_type == "hole":
+                            collisions.append("hole")
+                        if game_object.object_type == "jump":
+                            collisions.append("jump")
+                    if "solid" in collisions:
+                        link.move(previous_position)
+                        # link._state = CollidingState(link)
+                    elif "jump" in collisions:
+                        link._state = HoppingState(link)
+                    elif "hole" in collisions:
+                        link._state = SlippingState(link)
+
+                    #TODO: Fix this
+                    if "slow" in collisions:
+                        link.set_speed(float(game_object.properties["slow"]))
+                    else:
+                        link.set_speed(float(1.25))
+
+            # Update and move short grass effect
+            if link.in_grass:
+                for game_object in game_scene.list_objects():
+                    if game_object.object_type in link.effect_short_grass:
+                        game_object.move(link.position)
+                        game_object.update()
+
+            link.update()
+
+    def handle_event(self, link, game_scene, event):
+        if event.type == MOUSEBUTTONUP:
+            button = event.button
+            if button == 1:
+                if self.charged:
+                    link._state = SwordSpinState(link)
+                else:
+                    link._state = WalkingState(link)
+
+    def update(self, link, game_scene):
+        self.frame += 1
+        if self.frame == 30:
+            self.charged = True
+            link.play_sound('link_sword_charge')
 
 
 class SwordSpinState(engine.ObjectState):

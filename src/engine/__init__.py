@@ -1,4 +1,4 @@
-from src.engine.backend import soundstream
+from src.engine.backend import rect
 
 __author__ = 'brad'
 
@@ -11,6 +11,7 @@ import gameobject
 import resourceman
 import spritesheet
 import map
+import backend
 
 
 # Import engine level classes
@@ -23,5 +24,3 @@ from gameobject import ObjectState
 from resourceman import ResourceManager
 from spritesheet import Spritesheet
 from map import Map
-from src.engine.backend.soundstream import SoundStream
-from src.engine.backend.soundstream import WaveFile

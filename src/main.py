@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from src.game import gui
 
 __author__ = 'brad'
 import sys
