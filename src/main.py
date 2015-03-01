@@ -108,7 +108,7 @@ def run_game():
 
     textboxes = []
 
-    link = game.link.Link(0)
+    link = game.link.Link()
     camera = engine.GameObject(collision_rect=(pygame.Rect((0, 0), (COORDINATE_WIDTH, COORDINATE_HEIGHT))),
                                handle_collisions=True, object_type="camera", persistent=True)
     camera.collision_rect.center = camera.rect.center
@@ -377,6 +377,8 @@ def move_camera():
         camera.increment(camera_movement[link.direction])
         # print(str(camera_movement[player_var['direction']][1]))
         link.increment(room_movement[link.direction])
+        if link.state == "SwordChargeState":
+            link._state.sword.increment(room_movement[link.direction])
         if link.direction == 1 or link.direction == 3:
             var['camera_increment'] -= abs(camera_movement[link.direction][1])
         else:

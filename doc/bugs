@@ -6,3 +6,5 @@ Link keeps shield out after passing through transition
 Link can get trapped between two rooms
 Objects from map file can't have properties
 Current frame isn't working
+
+On certain tiles, grass gets drawn over link in certain frames of sword swipe when force update lines are removed

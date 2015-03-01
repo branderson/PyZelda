@@ -54,6 +54,36 @@ class Scene(object):
                                            (current_view.width,
                                             current_view.height))
 
+    def update_touching_objects(self, game_object):
+        position = game_object.scene_position
+        if isinstance(position[0], float) or isinstance(position[1], float):
+            for other_object in self.list_objects():
+                other_frame_rect = other_object.images[other_object.current_key][0][other_object.animation_frame].get_rect()
+                moved_object_rect = pygame.Rect((math.ceil(position[0]) + game_object._rect_offset[0],
+                                                 math.ceil(position[1]) + game_object._rect_offset[1]),
+                                                (game_object.rect.width, game_object.rect.height))
+                other_object_rect = pygame.Rect((math.ceil(other_object.scene_position[0]) +
+                                                 other_object._rect_offset[0],
+                                                 math.ceil(other_object.scene_position[1]) +
+                                                 other_object._rect_offset[1]),
+                                                (other_frame_rect.width,
+                                                 other_frame_rect.height))
+                if other_object_rect.colliderect(moved_object_rect):
+                    other_object.updated = True
+        for other_object in self.list_objects():
+            other_frame_rect = other_object.images[other_object.current_key][0][other_object.animation_frame].get_rect()
+            moved_object_rect = pygame.Rect((math.floor(position[0]) + game_object._rect_offset[0],
+                                             math.floor(position[1]) + game_object._rect_offset[1]),
+                                            (game_object.rect.width, game_object.rect.height))
+            other_object_rect = pygame.Rect((math.floor(other_object.scene_position[0]) +
+                                             other_object._rect_offset[0],
+                                             math.floor(other_object.scene_position[1]) +
+                                             other_object._rect_offset[1]),
+                                            (other_frame_rect.width,
+                                             other_frame_rect.height))
+            if other_object_rect.colliderect(moved_object_rect):
+                other_object.updated = True
+
     def insert_object(self, game_object, coordinate):
         game_object.updated = True
         if coordinate[0] > self.scene_width or coordinate[1] > self.scene_height:
@@ -64,6 +94,7 @@ class Scene(object):
             self.coordinate_array[coordinate] = [game_object]
         game_object.scene_position = coordinate
         game_object.position = coordinate
+        self.update_touching_objects(game_object)
         self.update_collisions()
         return True
 
@@ -73,6 +104,7 @@ class Scene(object):
         self.insert_object(game_object, (adjusted_x, adjusted_y))
 
     def remove_object(self, game_object):
+        self.update_touching_objects(game_object)
         self.coordinate_array[game_object.scene_position].remove(game_object)
         del game_object
 
@@ -209,34 +241,7 @@ class Scene(object):
                             add_object = True
                 if add_object and self.views[key].active:
                     if game_object.updated:
-                        position = game_object.scene_position
-                        if isinstance(position[0], float) or isinstance(position[1], float):
-                            for other_object in self.list_objects():
-                                other_frame_rect = other_object.images[other_object.current_key][0][other_object.animation_frame].get_rect()
-                                moved_object_rect = pygame.Rect((math.ceil(position[0]) + game_object._rect_offset[0],
-                                                                 math.ceil(position[1]) + game_object._rect_offset[1]),
-                                                                (game_object.rect.width, game_object.rect.height))
-                                other_object_rect = pygame.Rect((math.ceil(other_object.scene_position[0]) +
-                                                                 other_object._rect_offset[0],
-                                                                 math.ceil(other_object.scene_position[1]) +
-                                                                 other_object._rect_offset[1]),
-                                                                (other_frame_rect.width,
-                                                                 other_frame_rect.height))
-                                if other_object_rect.colliderect(moved_object_rect):
-                                    other_object.updated = True
-                        for other_object in self.list_objects():
-                            other_frame_rect = other_object.images[other_object.current_key][0][other_object.animation_frame].get_rect()
-                            moved_object_rect = pygame.Rect((math.floor(position[0]) + game_object._rect_offset[0],
-                                                             math.floor(position[1]) + game_object._rect_offset[1]),
-                                                            (game_object.rect.width, game_object.rect.height))
-                            other_object_rect = pygame.Rect((math.floor(other_object.scene_position[0]) +
-                                                             other_object._rect_offset[0],
-                                                             math.floor(other_object.scene_position[1]) +
-                                                             other_object._rect_offset[1]),
-                                                            (other_frame_rect.width,
-                                                             other_frame_rect.height))
-                            if other_object_rect.colliderect(moved_object_rect):
-                                other_object.updated = True
+                        self.update_touching_objects(game_object)
                     if self.update_all:
                         game_object.updated = True
                     self.views[key].insert_object(game_object, (game_object.position[0] + game_object._rect_offset[0] -
@@ -251,33 +256,7 @@ class Scene(object):
                 frame_rect = game_object.images[game_object.current_key][0][game_object.animation_frame].get_rect()
                 if game_object.scene_position != game_object.position or game_object.rect != frame_rect:
                     position = game_object.scene_position
-                    if isinstance(position[0], float) or isinstance(position[1], float):
-                        for other_object in self.list_objects():
-                            other_frame_rect = other_object.images[other_object.current_key][0][other_object.animation_frame].get_rect()
-                            moved_object_rect = pygame.Rect((math.ceil(position[0]) + game_object._rect_offset[0],
-                                                             math.ceil(position[1]) + game_object._rect_offset[1]),
-                                                            (game_object.rect.width, game_object.rect.height))
-                            other_object_rect = pygame.Rect((math.ceil(other_object.scene_position[0]) +
-                                                             other_object._rect_offset[0],
-                                                             math.ceil(other_object.scene_position[1]) +
-                                                             other_object._rect_offset[1]),
-                                                            (other_frame_rect.width,
-                                                             other_frame_rect.height))
-                            if other_object_rect.colliderect(moved_object_rect):
-                                other_object.updated = True
-                    for other_object in self.list_objects():
-                        other_frame_rect = other_object.images[other_object.current_key][0][other_object.animation_frame].get_rect()
-                        moved_object_rect = pygame.Rect((math.floor(position[0]) + game_object._rect_offset[0],
-                                                         math.floor(position[1]) + game_object._rect_offset[1]),
-                                                        (game_object.rect.width, game_object.rect.height))
-                        other_object_rect = pygame.Rect((math.floor(other_object.scene_position[0]) +
-                                                         other_object._rect_offset[0],
-                                                         math.floor(other_object.scene_position[1]) +
-                                                         other_object._rect_offset[1]),
-                                                        (other_frame_rect.width,
-                                                         other_frame_rect.height))
-                        if other_object_rect.colliderect(moved_object_rect):
-                            other_object.updated = True
+                    self.update_touching_objects(game_object)
                     if position is not None:
                         if game_object.position in self.coordinate_array:
                             self.coordinate_array[game_object.position].append(game_object)

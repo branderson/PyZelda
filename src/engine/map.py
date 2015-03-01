@@ -67,6 +67,8 @@ class Map(object):
                 if object_rect.find("properties") is not None:
                     for object_property in object_rect.find("properties").findall("property"):
                         current_properties[object_property.get("name")] = object_property.get("value")
+                if "layer" not in current_properties.keys():
+                    current_properties["layer"] = 0
                 self.object_properties[rect_index] = current_properties
             self.object_layers[layer.get("name")] = rect_list
             for layer_property in layer.findall("property"):
@@ -169,7 +171,8 @@ class Map(object):
                         rect_index = str(object_rect[0]) + " " + str(object_rect[1]) + " " + str(object_rect[2]) + " " + str(object_rect[3])
                         scene.insert_object(GameObject(collision_rect=pygame.Rect(0, 0, object_rect[2], object_rect[3]),
                                                        handle_collisions=True, object_type=layer_name, visible=False,
-                                                       properties=self.object_properties[rect_index]),
+                                                       properties=self.object_properties[rect_index],
+                                                       layer=self.object_properties[rect_index]["layer"]),
                                             (object_rect[0], object_rect[1]))
                         objects += 1
         # print("Added " + str(tiles) + " tiles")

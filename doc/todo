@@ -33,3 +33,5 @@ Game
     Maybe make two different collision arrays so I'm not always switching and reloading them multiple times/frame
 
     Handle collisions for grass and stuff that doesn't involve player in main, not in player code
+
+    Make update objects touching removed objects

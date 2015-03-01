@@ -4,6 +4,7 @@ import src.engine as engine
 import pygame
 import effects
 import random
+import linksword
 
 from pygame.locals import *
 
@@ -13,7 +14,7 @@ SOUND_DIR = RESOURCE_DIR + 'sound/'
 
 
 class Link(engine.GameObject):
-    def __init__(self, layer=0):
+    def __init__(self, layer=50):
         self.resource_manager = engine.ResourceManager()
         link_sheet = engine.Spritesheet(SPRITE_DIR + "Link.png")
 
@@ -111,6 +112,7 @@ class Link(engine.GameObject):
         # self.collide = CollidingState()
         # self.shield = ShieldState()
         self._state = WalkingState(self)
+        self.state = "WalkingState"
 
     def update_interactions(self):
         if self.facing == 0:
@@ -173,6 +175,7 @@ class Link(engine.GameObject):
 
 class WalkingState(engine.ObjectState):
     def __init__(self, link):
+        link.state = "WalkingState"
         engine.ObjectState.__init__(self)
         # Change animations
         if not link.shield:
@@ -295,6 +298,7 @@ class WalkingState(engine.ObjectState):
 
 class CollidingState(engine.ObjectState):
     def __init__(self, link):
+        link.state = "CollidingState"
         engine.ObjectState.__init__(self)
         link.set_animation(link.link_push[link.facing], 0)
         link.controllable = True
@@ -381,6 +385,7 @@ class CollidingState(engine.ObjectState):
 
 class HoppingState(engine.ObjectState):
     def __init__(self, link):
+        link.state = "HoppingState"
         engine.ObjectState.__init__(self)
         link.set_animation("link_hop_down", 0)
         link.controllable = False
@@ -450,6 +455,7 @@ class FallingState(engine.ObjectState):
 
 class ShieldState(engine.ObjectState):
     def __init__(self, link):
+        link.state = "ShieldState"
         engine.ObjectState.__init__(self)
         link.controllable = False
         link.set_animation(link.link_use_shield[link.facing], 0)
@@ -554,27 +560,28 @@ class ShieldState(engine.ObjectState):
 
 class SwordState(engine.ObjectState):
     def __init__(self, link):
+        link.state = "SwordState"
         engine.ObjectState.__init__(self)
         link.set_animation(link.link_sword[link.facing], 0)
+        link.animation_counter = 0
         self.holding = True
-        self.charged = False
-        self.spin = False
-        self.frame = 0
-        link.animation_speed = 15
+        self.incremented = False
+        self.frame = -2
+        link.animation_speed = 4
         link.rect_offset = (0, 0)
 
         # Play random slash sound
         link.play_sound(link.sword_slashes[random.randrange(0, 4, 1)])
 
-        # Set rect offset
-        # if link.facing == 0:
-        #     link.rect_offset = (0, -16)
-        # elif link.facing == 1:
-        #     link.rect_offset = (0, -16)
-        # elif link.facing == 2:
-        #     link.rect_offset = (-16, -16)
-        # elif link.facing == 3:
-        #     link.rect_offset = (-16, 0)
+        # Make the sword
+        self.sword = linksword.LinkSword(link.facing)
+        self.sword.animation_speed = link.animation_speed / 2
+        self.inserted = False
+        self.sword_positions = [[(0, -16), (12, -12), (16, 0)],
+                                [(16, 0), (12, -12), (0, -16)],
+                                [(0, -16), (-12, -12), (-16, 0)],
+                                [(-16, 0), (-12, 12), (0, 16)]]
+        self.link_movement = [(2, 0), (0, -2), (-2, 0), (0, 2)]
 
     def handle_input(self, link, game_scene):
         mouse = pygame.mouse.get_pressed()
@@ -586,27 +593,51 @@ class SwordState(engine.ObjectState):
         if event.type == MOUSEBUTTONDOWN:
             button = event.button
             if button == 1:
+                if self.inserted:
+                    game_scene.remove_object(self.sword)
+                if self.incremented:
+                    link.increment((-1*self.link_movement[link.facing][0], -1*self.link_movement[link.facing][1]))
                 link._state = SwordState(link)
 
     def update(self, link, game_scene):
-        if self.frame <= 1:
-            if link.update():
-                self.frame += 1
-        if self.frame > 1:
+        if not self.inserted and self.frame == -1:
+            game_scene.insert_object(self.sword, (link.position[0] + self.sword_positions[link.facing][0][0],
+                                                  link.position[1] + self.sword_positions[link.facing][0][1]))
+            self.inserted = True
+            self.frame = 0
+        if self.frame == -2:
+            self.frame = -1
+        if self.sword.animation_frame < 2 and self.inserted:
+            if self.sword.update():
+                if self.sword.animation_frame == 1:
+                    link.set_animation_frame(1)
+                elif self.sword.animation_frame == 2:
+                    link.increment(self.link_movement[link.facing])
+                    self.incremented = True
+                self.sword.move((link.position[0] + self.sword_positions[link.facing][self.frame][0],
+                                 link.position[1] + self.sword_positions[link.facing][self.frame][1]))
+
+        if link.update(can_update=False):
             self.frame += 1
-        if self.frame > 10:
-            if not self.holding:
-                mouse = pygame.mouse.get_pressed()
-                if mouse[2]:
-                    link._state = ShieldState(link)
+            if self.frame == 5:
+                link.increment((-1*self.link_movement[link.facing][0], -1*self.link_movement[link.facing][1]))
+                self.incremented = False
+                if not self.holding:
+                    mouse = pygame.mouse.get_pressed()
+                    if mouse[2]:
+                        link._state = ShieldState(link)
+                    else:
+                        link._state = WalkingState(link)
                 else:
-                    link._state = WalkingState(link)
-            else:
-                link._state = SwordChargeState(link)
+                    link._state = SwordChargeState(link)
+                game_scene.remove_object(self.sword)
+        link.updated = True  # Don't know why these don't update normally here
+        self.sword.updated = True
 
 
 class SwordChargeState(engine.ObjectState):
     def __init__(self, link):
+        link.state = "SwordChargeState"
         engine.ObjectState.__init__(self)
         if link.shield:
             link.set_animation(link.link_shield_walk[link.facing], 0)
@@ -618,6 +649,11 @@ class SwordChargeState(engine.ObjectState):
         self.spin = False
         self.frame = 0
         link.animation_speed = 15
+
+        self.sword = linksword.LinkSword(link.facing)
+        self.sword.set_animation_frame(2)
+        self.sword_positions = [(12, 0), (0, -12), (-12, 0), (0, 12)]
+        self.inserted = False
 
     @staticmethod
     def handle_input(link, game_scene):
@@ -692,11 +728,27 @@ class SwordChargeState(engine.ObjectState):
             button = event.button
             if button == 1:
                 if self.charged:
+                    if self.inserted:
+                        game_scene.remove_object(self.sword)
                     link._state = SwordSpinState(link)
                 else:
+                    if self.inserted:
+                        game_scene.remove_object(self.sword)
                     link._state = WalkingState(link)
 
     def update(self, link, game_scene):
+        if not self.inserted:
+            game_scene.insert_object(self.sword, (link.position[0] + self.sword_positions[link.facing][0],
+                                                  link.position[1] + self.sword_positions[link.facing][1]))
+            self.inserted = True
+        else:
+            self.sword.move((link.position[0] + self.sword_positions[link.facing][0],
+                             link.position[1] + self.sword_positions[link.facing][1]))
+        if self.charged:
+            if self.sword.animation_frame == 2 and self.frame % 3 == 0:
+                self.sword.set_animation_frame(3)
+            elif self.frame % 3 == 0:
+                self.sword.set_animation_frame(2)
         self.frame += 1
         if self.frame == 30:
             self.charged = True
@@ -705,6 +757,7 @@ class SwordChargeState(engine.ObjectState):
 
 class SwordSpinState(engine.ObjectState):
     def __init__(self, link):
+        link.state = "SwordSpinState"
         engine.ObjectState.__init__(self)
         link.controllable = False
         link.animation_frame = 0
@@ -722,5 +775,5 @@ class SwordSpinState(engine.ObjectState):
     def update(self, link, game_scene):
         if link.update():
             self.frame += 1
-        if self.frame > 6:
+        if self.frame > 2:
             link._state = WalkingState(link)
