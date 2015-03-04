@@ -71,7 +71,10 @@ class Scene(object):
                 if other_object_rect.colliderect(moved_object_rect):
                     other_object.updated = True
         for other_object in self.list_objects():
-            other_frame_rect = other_object.images[other_object.current_key][0][other_object.animation_frame].get_rect()
+            try:
+                other_frame_rect = other_object.images[other_object.current_key][0][other_object.animation_frame].get_rect()
+            except IndexError:
+                print(other_object.object_type + " " + str(other_object.animation_frame))
             moved_object_rect = pygame.Rect((math.floor(position[0]) + game_object._rect_offset[0],
                                              math.floor(position[1]) + game_object._rect_offset[1]),
                                             (game_object.rect.width, game_object.rect.height))
@@ -252,7 +255,9 @@ class Scene(object):
 
     def update_coordinates(self):
         for game_object in self.list_objects():
-            if game_object.updated:
+            if game_object.remove:
+                self.remove_object(game_object)
+            elif game_object.updated:
                 frame_rect = game_object.images[game_object.current_key][0][game_object.animation_frame].get_rect()
                 if game_object.scene_position != game_object.position or game_object.rect != frame_rect:
                     position = game_object.scene_position

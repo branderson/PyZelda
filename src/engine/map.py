@@ -103,7 +103,7 @@ class Map(object):
                                 scene.insert_object(GameObject(self.resource_manager.get_images('tile_set')
                                                                [current_tile], -1000, object_type=layer_name,
                                                                properties=self.special_tiles[current_tile],
-                                                               tile_id=current_tile),
+                                                               tile_id=current_tile, sync=True),
                                                     (16*tile, 16*row))
                             else:
                                 scene.insert_object(GameObject(self.resource_manager.get_images('tile_set')
@@ -146,7 +146,7 @@ class Map(object):
                                     scene.insert_object(GameObject(images, -1000, object_type=layer_name,
                                                                    properties=self.special_tiles[current_tile],
                                                                    tile_id=current_tile, animate=True,
-                                                                   current_frame=current_frame),
+                                                                   current_frame=current_frame, sync=True),
                                                         (16*(tile_rect[0]+tile), 16*(tile_rect[1]+row)))
                                 else:
                                     scene.insert_object(GameObject(self.resource_manager.get_images('tile_set')

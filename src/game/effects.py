@@ -43,3 +43,20 @@ class ShortForestGrass(AbstractShortGrass):
                                                             (0, 16), 3, 3, (16, 16), 0, 0, (64, 64, 192))
         self.add_animation('image', self.resource_manager.get_images('effect_short_forest_grass'))
         self.set_animation('image', 0)
+
+
+class CutGrass(AbstractEffect):
+    def __init__(self):
+        AbstractEffect.__init__(self, 'effect_cut_grass')
+        self.resource_manager.add_spritesheet_strip_offsets('effect_cut_grass', self.effect_sheet,
+                                                            (0, 32), 8, 8, (32, 32), 0, 0, (64, 64, 192))
+        self.add_animation('image', self.resource_manager.get_images('effect_cut_grass'))
+        self.set_animation('image', 0)
+        self.animation_speed = 2
+        self.animate = True
+
+    def update(self, can_update=True, rewind=False, direction=1):
+        if self.animation_frame == 7:
+            self.remove = True
+        else:
+            engine.GameObject.update(self)

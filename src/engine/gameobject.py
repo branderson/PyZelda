@@ -14,7 +14,7 @@ class ObjectState(object):
 class GameObject(pygame.sprite.Sprite, object):
     def __init__(self, image=None, layer=0, masks=None, collision_rect=None, angle=0, position=(0, 0),
                  handle_collisions=False, object_type=None, properties=None, visible=True, persistent=False,
-                 tile_id=None, animate=False, animation_speed=15, current_frame=0):
+                 tile_id=None, animate=False, animation_speed=15, current_frame=0, sync=False):
         pygame.sprite.Sprite.__init__(self)
         self.images = {}
         self.images['image'] = {}
@@ -37,6 +37,7 @@ class GameObject(pygame.sprite.Sprite, object):
         self.animation_frame = current_frame
         self.animation_speed = animation_speed  # How many frames to wait between frames
         self.animation_counter = 0
+        self.sync = sync
         self.frame_ready = False
         self.current_image = self.images['image']
         self.current_key = 'image'
@@ -63,6 +64,7 @@ class GameObject(pygame.sprite.Sprite, object):
         self.updated = True
         self.updated_sprite = False
         self.solid = False
+        self.remove = False
         if properties is None:
             self.properties = {}
         else:

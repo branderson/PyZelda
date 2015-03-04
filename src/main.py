@@ -267,7 +267,8 @@ def handle_event(event):
             screen = pygame.display.set_mode((480, 432))
         if key == K_f:
             pygame.display.toggle_fullscreen()
-    link.handle_event(game_scene, event)
+    if var["can_move"]:
+        link.handle_event(game_scene, event)
     return
 
 
@@ -322,12 +323,14 @@ def test_music_change():
 def update_room():
     update_player()
     update_animated_tiles()
+    update_objects()
 
 
 def update_player():
     global var, resource_manager
 
-    link.handle_input(game_scene)
+    if var["can_move"]:
+        link.handle_input(game_scene)
     link.update_state(game_scene)
 
     # Check for collision with edge of screen
@@ -367,8 +370,22 @@ def update_animated_tiles():
     for game_object in game_scene.list_objects():
         if game_object.animate:
             game_object.update()
-            if var['current_frame'] != game_object.animation_frame:
+            if var['current_frame'] != game_object.animation_frame and game_object.sync:
                 var['current_frame'] = game_object.animation_frame
+
+
+def update_objects():
+    global game_scene, var, link
+
+    for game_object in game_scene.list_objects():
+        if game_object.object_type in link.big_grass or game_object.object_type in link.short_grass:
+            if link.state == "SwordState" or link.state == "SwordSpinState":
+                if link._state.sword in game_scene.collision_array:
+                    if game_scene.check_object_collision(game_object, link._state.sword):
+                        position = game_object.position
+                        game_scene.remove_object(game_object)
+                        game_scene.insert_object(game.specialtiles.GroundTile(resource_manager), position)
+                        game_scene.insert_object_centered(game.effects.CutGrass(), (position[0]-8, position[1]-8))
 
 
 def move_camera():
