@@ -97,7 +97,7 @@ class Scene(object):
             self.coordinate_array[coordinate] = [game_object]
         game_object.scene_position = coordinate
         game_object.position = coordinate
-        self.update_touching_objects(game_object)
+        # self.update_touching_objects(game_object)
         self.update_collisions()
         return True
 

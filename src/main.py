@@ -89,6 +89,7 @@ def main():
 
     # Sounds
 
+
     game_map = engine.Map(RESOURCE_DIR + 'worlds/grassworldtmx', SPRITE_DIR + 'OverworldSheet.png')
 
     while True:
@@ -379,13 +380,16 @@ def update_objects():
 
     for game_object in game_scene.list_objects():
         if game_object.object_type in link.big_grass or game_object.object_type in link.short_grass:
-            if link.state == "SwordState" or link.state == "SwordSpinState":
-                if link._state.sword in game_scene.collision_array:
-                    if game_scene.check_object_collision(game_object, link._state.sword):
-                        position = game_object.position
-                        game_scene.remove_object(game_object)
-                        game_scene.insert_object(game.specialtiles.GroundTile(resource_manager), position)
-                        game_scene.insert_object_centered(game.effects.CutGrass(), (position[0]-8, position[1]-8))
+            if (link.state == "SwordState" or link.state == "SwordSpinState") and link._state.sword.handle_collisions:
+                if game_object.get_global_rect().colliderect(link._state.sword.get_global_collision_rect()):
+                    print(str(link._state.sword.collision_rect[0]) + ", " + str(link._state.sword.collision_rect[1]) + ", " +
+                          str(link._state.sword.collision_rect[2]) + ", " +str(link._state.sword.collision_rect[3]))
+                    position = game_object.position
+                    game_scene.remove_object(game_object)
+                    game_scene.insert_object(game.specialtiles.GroundTile(resource_manager), position)
+                    game_scene.insert_object_centered(game.effects.CutGrass(), (position[0]-8, position[1]-8))
+                    if link.state == "SwordState":
+                        resource_manager.play_sound('grass_cut')
 
 
 def move_camera():

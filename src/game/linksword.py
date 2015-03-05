@@ -36,15 +36,16 @@ class LinkSword(engine.GameObject):
 
         self.facing = facing
         self.handle_collisions = True
-        frame_col = {'up': ((1, 1), (6, 15)),
-                     'ur': ((0, 0), (16, 16)),
-                     'right': ((0, 9), (15, 6)),
-                     'dr': ((0, 0), (16, 16)),
-                     'down': ((10, 0), (6, 15)),
-                     'dl': ((0, 0), (16, 16)),
-                     'left': ((2, 10), (15, 6)),
-                     'ul': ((0, 0), (16, 16)),
-                     'right_upper': ((0, 1), (15, 6))}
+        frame_col = {'up': ((3, 10), (1, 6)),
+                     'ur': ((0, 6), (10, 10)),
+                     'right': ((0, 11), (6, 1)),
+                     'dr': ((0, 0), (10, 10)),
+                     'down': ((11, 0), (1, 6)),
+                     'dl': ((6, 0), (10, 10)),
+                     'left': ((10, 11), (6, 1)),
+                     'ul': ((6, 6), (10, 10)),
+                     'right_upper': ((0, 3), (6, 1)),
+                     'nu': ((0, 16), (0, 0)), 'nr': ((0, 10), (0, 0)), 'nd': ((0, 0), (0, 0)), 'nl': ((16, 10), (0, 0))}
         self.collision_rects = {'link_sword_up': [Rect(frame_col['right_upper']), Rect(frame_col['ur']), Rect(frame_col['up'])],
                                 'link_sword_down': [Rect(frame_col['left']), Rect(frame_col['dl']), Rect(frame_col['down'])],
                                 'link_sword_right': [Rect(frame_col['up']), Rect(frame_col['ur']), Rect(frame_col['right'])],
@@ -58,6 +59,5 @@ class LinkSword(engine.GameObject):
                                                             Rect(frame_col['ur']), Rect(frame_col['up']),
                                                             Rect(frame_col['ul']), Rect(frame_col['left'])]}
 
-    def update(self, can_update=True, rewind=False, direction=1):
+    def update_collisions(self):
         self.collision_rect = self.collision_rects[self.current_key][self.animation_frame]
-        return engine.GameObject.update(self, can_update, rewind, direction)

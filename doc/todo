@@ -35,3 +35,4 @@ Game
     Handle collisions for grass and stuff that doesn't involve player in main, not in player code
 
     Make update objects touching removed objects
+    Allow objects to have child objects

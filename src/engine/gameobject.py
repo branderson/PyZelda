@@ -79,14 +79,20 @@ class GameObject(pygame.sprite.Sprite, object):
                 if object_property == "object_type":
                     self.object_type = properties[object_property]
                 if object_property == "collision_rect":
-                    if object_property == "collision_rect":
-                        crect_list = map(int, self.properties[object_property].split(','))
-                        self.collision_rect = pygame.Rect(crect_list)
+                    crect_list = map(int, self.properties[object_property].split(','))
+                    self.collision_rect = pygame.Rect(crect_list)
         self.tile_id = tile_id
         # self.rotate(0)
         if masks is not None:
             for mask in masks:
                 self.add_mask(mask)
+
+    def get_global_rect(self):
+        return pygame.Rect(self.rect[0] + self.position[0], self.rect[1] + self.position[1], self.rect[2], self.rect[3])
+
+    def get_global_collision_rect(self):
+        return pygame.Rect(self.collision_rect[0] + self.position[0], self.collision_rect[1] + self.position[1],
+                           self.collision_rect[2], self.collision_rect[3])
 
     def add_mask(self, mask):
         self.masks.append(mask)
