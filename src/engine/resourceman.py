@@ -38,7 +38,13 @@ class ResourceManager(object):
         self.current_sounds = [backend.Sound(self.pya) for x in xrange(self.sound_channels)]
         self.sound_queue_index = 0
 
-    def add_image(self, key, filename):
+    def add_image(self, key, image):
+        self.sprites[key] = image
+
+    def add_image_list(self, key, images):
+        self.sprites[key] = images
+
+    def add_image_file(self, key, filename):
         try:
             self.sprites[key] = pygame.image.load(filename).convert_alpha()
             return True
@@ -48,7 +54,7 @@ class ResourceManager(object):
     def remove_image(self, key):
         del self.sprites[key]
 
-    def add_image_list(self, key, filenames):
+    def add_image_file_list(self, key, filenames):
         self.sprites[key] = []
         for filename in filenames:
             try:

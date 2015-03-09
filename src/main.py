@@ -72,11 +72,15 @@ def main():
     clock = engine.GameClock(*CLOCK_SETTINGS)
 
     # Load the resources
-
     overworld_sheet = engine.Spritesheet(SPRITE_DIR + "OverworldSheet.png")
+    enemy_sheet = engine.Spritesheet(SPRITE_DIR + "Enemies.png")
+
     resource_manager = engine.ResourceManager()
 
     resource_manager.add_spritesheet_strip_offsets('overworld_tiles', overworld_sheet, (1, 1), 600, 24, (16, 16), 1, 1)
+
+    # Load enemy sprites
+    resource_manager.add_spritesheet_strip_offsets('octorok', enemy_sheet, (0, 0), 9, 9, (16, 16), 0, 0, (64, 64, 192))
 
     resource_manager.add_font('gui_font_small', FONT_DIR + "ReturnofGanon.ttf", 20)
     resource_manager.add_font('gui_font_large', FONT_DIR + "ReturnofGanon.ttf", 46)
@@ -225,11 +229,11 @@ def handle_event(event):
     # Quit the game
     if event.type == KEYDOWN:
         key = event.key
-        if link.controllable:
+        if link.controllable and var['can_move']:
             if key == K_SPACE:
                 for game_object in game_scene.check_collision_rect_objects(link.interaction_rect):
                     if game_object.object_type == "sign":
-                        link.controllable = False
+                        var['can_move'] = False
                         justify = "center"
                         if "justify" in game_object.properties:
                             justify = game_object.properties["justify"]
@@ -257,7 +261,7 @@ def handle_event(event):
                     game_scene.update_all = True
                     game_scene.update('game_view')
                     game_scene.update_all = False
-                    link.controllable = True
+                    var['can_move'] = True
         if key == K_ESCAPE:
             terminate()
         if key == K_r:
@@ -300,18 +304,11 @@ def build_world():
     global game_map
     for game_object in game_scene.list_objects():
         for object_property in game_object.properties.keys():
-            # if object_property == "object_type":
-                # Build special objects
-                # object_type = game_object.properties[object_property]
-                # if object_type == "big_beach_grass":
-                #     game_scene.remove_object(game_object)
-                    # game_scene.insert_object(specialtiles.BigBeachGrass(game_map.resource_manager), coordinate)
-                # if object_type == "half_post":
-                #     game_object.collision_rect = pygame.Rect((8, 0), (8, 16))
-            # if object_property == "collision_rect":
-            #     crect_list = map(int, game_object.properties[object_property].split(','))
-            #     game_object.collision_rect = pygame.Rect(crect_list)
-            pass
+            if object_property == "type":
+                object_type = game_object.properties[object_property]
+                if object_type == 'octorok_spawn':
+                    game_scene.remove_object(game_object)
+                    game_scene.insert_object(game.octorok.Octorok(resource_manager), game_object.position)
 
 
 def test_music_change():
@@ -390,6 +387,10 @@ def update_objects():
                     game_scene.insert_object_centered(game.effects.CutGrass(), (position[0]-8, position[1]-8))
                     if link.state == "SwordState":
                         resource_manager.play_sound('grass_cut')
+        if game_object._state != None and game_object != link:
+            game_object._state.update(game_object, game_scene)
+        if game_object.call_special_update:
+            game_object.special_update(game_scene)
 
 
 def move_camera():

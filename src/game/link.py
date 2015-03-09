@@ -81,6 +81,7 @@ class Link(engine.GameObject):
 
         # Add sounds to Link
         self.resource_manager.add_sound('link_hop', SOUND_DIR + 'LA_Link_Jump.wav')
+        self.resource_manager.add_sound('link_land', SOUND_DIR + 'LA_Link_Land.wav')
         self.resource_manager.add_sound('link_shield', SOUND_DIR + 'LA_Shield.wav')
         self.resource_manager.add_sound('link_fall', SOUND_DIR + 'LA_Link_Fall.wav')
         self.resource_manager.add_sound('link_sword_1', SOUND_DIR + 'LA_Sword_Slash1.wav')
@@ -111,6 +112,8 @@ class Link(engine.GameObject):
         self.direction_held = False
         self.body_rect = self.rect
         self.interaction_rect = None  # self.collision_rect.copy()
+        self.standard_animation_speed = 15
+        self.solid = True
 
         # Link's States
         # self.walk = WalkingState()
@@ -188,7 +191,7 @@ class WalkingState(engine.ObjectState):
         else:
             link.set_animation(link.link_shield_walk[link.facing], 0)
         link.controllable = True
-        link.animation_speed = 15
+        link.animation_speed = link.standard_animation_speed
         link.rect_offset = (0, 0)
 
     @staticmethod
@@ -265,6 +268,8 @@ class WalkingState(engine.ObjectState):
                             collisions.append("hole")
                         if game_object.object_type == "jump":
                             collisions.append("jump")
+                        if game_object.object_type == "octorok":
+                            print("Octorok")
                     if "solid" in collisions:
                         link.move(previous_position)
                         link._state = CollidingState(link)
@@ -306,7 +311,7 @@ class CollidingState(engine.ObjectState):
         engine.ObjectState.__init__(self)
         link.set_animation(link.link_push[link.facing], 0)
         link.controllable = True
-        link.animation_speed = 15
+        link.animation_speed = link.standard_animation_speed
         link.rect_offset = (0, 0)
 
     @staticmethod
@@ -421,6 +426,7 @@ class HoppingState(engine.ObjectState):
             else:
                 link.set_animation('link_walk_down', 0)
         if not moved:
+            link.play_sound('link_land')
             link._state = WalkingState(link)
 
 
@@ -465,7 +471,7 @@ class ShieldState(engine.ObjectState):
         link.controllable = False
         link.set_animation(link.link_use_shield[link.facing], 0)
         link.play_sound('link_shield')
-        link.animation_speed = 15
+        link.animation_speed = link.standard_animation_speed
         link.rect_offset = (0, 0)
 
     @staticmethod
@@ -669,7 +675,7 @@ class SwordChargeState(engine.ObjectState):
         self.charged = False
         self.spin = False
         self.frame = 0
-        link.animation_speed = 15
+        link.animation_speed = link.standard_animation_speed
 
         self.sword = linksword.LinkSword(link.facing, mode="charge")
         self.sword.set_animation_frame(2)

@@ -74,7 +74,7 @@ class Scene(object):
             try:
                 other_frame_rect = other_object.images[other_object.current_key][0][other_object.animation_frame].get_rect()
             except IndexError:
-                print(other_object.object_type + " " + str(other_object.animation_frame))
+                print(other_object.object_type + " " + other_object.current_key + " " + str(other_object.animation_frame))
             moved_object_rect = pygame.Rect((math.floor(position[0]) + game_object._rect_offset[0],
                                              math.floor(position[1]) + game_object._rect_offset[1]),
                                             (game_object.rect.width, game_object.rect.height))
@@ -165,7 +165,7 @@ class Scene(object):
         self.update_collisions()
         object_list = []
         for test_object in self.collision_array:
-            if self.collision_array[game_object].colliderect(self.collision_array[test_object]):
+            if self.collision_array[game_object].colliderect(self.collision_array[test_object]) and test_object != game_object:
                 object_list.append(test_object)
         return object_list
 
@@ -257,8 +257,12 @@ class Scene(object):
         for game_object in self.list_objects():
             if game_object.remove:
                 self.remove_object(game_object)
+                del game_object
             elif game_object.updated:
-                frame_rect = game_object.images[game_object.current_key][0][game_object.animation_frame].get_rect()
+                try:
+                    frame_rect = game_object.images[game_object.current_key][0][game_object.animation_frame].get_rect()
+                except IndexError:
+                    print(game_object.object_type + " " + game_object.current_key + " " + str(game_object.animation_frame))
                 if game_object.scene_position != game_object.position or game_object.rect != frame_rect:
                     position = game_object.scene_position
                     self.update_touching_objects(game_object)

@@ -14,7 +14,8 @@ class ObjectState(object):
 class GameObject(pygame.sprite.Sprite, object):
     def __init__(self, image=None, layer=0, masks=None, collision_rect=None, angle=0, position=(0, 0),
                  handle_collisions=False, object_type=None, properties=None, visible=True, persistent=False,
-                 tile_id=None, animate=False, animation_speed=15, current_frame=0, sync=False):
+                 tile_id=None, animate=False, animation_speed=15, current_frame=0, sync=False, solid=False,
+                 hitbox=None, call_special_update=False):
         pygame.sprite.Sprite.__init__(self)
         self.images = {}
         self.images['image'] = {}
@@ -45,6 +46,10 @@ class GameObject(pygame.sprite.Sprite, object):
             self.collision_rect = self.images['image'][0][0].get_rect()
         else:
             self.collision_rect = collision_rect
+        if hitbox is None:
+            self.hitbox = self.collision_rect
+        else:
+            self.hitbox = hitbox
         self.rect = self.images['image'][0][0].get_rect()
         self._rect_offset = (0, 0)
         self.rect_offset = (0, 0)
@@ -63,8 +68,9 @@ class GameObject(pygame.sprite.Sprite, object):
         self.persistent = persistent
         self.updated = True
         self.updated_sprite = False
-        self.solid = False
+        self.solid = solid
         self.remove = False
+        self.call_special_update = call_special_update
         if properties is None:
             self.properties = {}
         else:
@@ -81,6 +87,9 @@ class GameObject(pygame.sprite.Sprite, object):
                 if object_property == "collision_rect":
                     crect_list = map(int, self.properties[object_property].split(','))
                     self.collision_rect = pygame.Rect(crect_list)
+                if object_property == "hitbox":
+                    crect_list = map(int, self.properties[object_property].split(','))
+                    self.hitbox = pygame.Rect(crect_list)
         self.tile_id = tile_id
         # self.rotate(0)
         if masks is not None:
@@ -93,6 +102,10 @@ class GameObject(pygame.sprite.Sprite, object):
     def get_global_collision_rect(self):
         return pygame.Rect(self.collision_rect[0] + self.position[0], self.collision_rect[1] + self.position[1],
                            self.collision_rect[2], self.collision_rect[3])
+
+    def get_global_hitbox(self):
+        return pygame.Rect(self.hitbox[0] + self.position[0], self.hitbox[1] + self.position[1],
+                           self.hitbox[2], self.hitbox[3])
 
     def add_mask(self, mask):
         self.masks.append(mask)
@@ -114,6 +127,7 @@ class GameObject(pygame.sprite.Sprite, object):
         self.current_image = self.images[key]
         self.current_key = key
         self.animation_frame = 0
+        self.rect = self.images[self.current_key][self.animation_frame][0].get_rect()
         # self.rect = self.current_image[0][0].get_rect()
         # self.rotate(0)
 

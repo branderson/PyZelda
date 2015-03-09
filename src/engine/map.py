@@ -64,6 +64,8 @@ class Map(object):
                     print("There was a problem loading object at " + str(int(object_rect.get("x"))/self.tile_width)
                           + ", " + str(int(object_rect.get("y"))/self.tile_height))
                 current_properties = {}
+                if object_rect.get("type") is not None:
+                    current_properties["type"] = object_rect.get("type")
                 if object_rect.find("properties") is not None:
                     for object_property in object_rect.find("properties").findall("property"):
                         current_properties[object_property.get("name")] = object_property.get("value")
