@@ -98,7 +98,7 @@ def main():
 
     while True:
         if not run_game():
-            print("Back in main, breaking and quiting pygame")
+            # print("Back in main, breaking and quiting pygame")
             break
 
 
@@ -137,7 +137,7 @@ def run_game():
     # Game loop
     while True:
         if force_exit:
-            print("Exit has been forced, ending run_game")
+            # print("Exit has been forced, ending run_game")
             return False
         clock.tick()
         if clock.update_ready:
@@ -379,8 +379,8 @@ def update_objects():
         if game_object.object_type in link.big_grass or game_object.object_type in link.short_grass:
             if (link.state == "SwordState" or link.state == "SwordSpinState") and link._state.sword.handle_collisions:
                 if game_object.get_global_rect().colliderect(link._state.sword.get_global_collision_rect()):
-                    print(str(link._state.sword.collision_rect[0]) + ", " + str(link._state.sword.collision_rect[1]) + ", " +
-                          str(link._state.sword.collision_rect[2]) + ", " +str(link._state.sword.collision_rect[3]))
+                    # print(str(link._state.sword.collision_rect[0]) + ", " + str(link._state.sword.collision_rect[1]) + ", " +
+                    #       str(link._state.sword.collision_rect[2]) + ", " +str(link._state.sword.collision_rect[3]))
                     position = game_object.position
                     game_scene.remove_object(game_object)
                     game_scene.insert_object(game.specialtiles.GroundTile(resource_manager), position)
@@ -415,20 +415,18 @@ def move_camera():
 def terminate():
     global force_exit
     force_exit = True
-    print("Forcing exit from run_game")
+    # print("Forcing exit from run_game")
     # pygame.quit()
     # sys.exit()
 
 
 def has_quit():
-    print("Pygame has quit")
+    # print("Pygame has quit")
+    return
 
 
 # if __name__ == '__main__':
 #     main()
 #     print("Exited main")
 main()
-print("Exited main")
-
-print("We're at the very end of execution")
 sys.exit()

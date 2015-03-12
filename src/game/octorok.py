@@ -106,17 +106,14 @@ class Missile(engine.GameObject):
 
     def special_update(self, game_scene):
         self.increment(self.movement[self.direction])
-        print("Incrementing")
         on_screen = False
         for game_object in game_scene.check_object_collision_objects(self):
             if game_object.solid and game_object.object_type != "octorok":
                 self.remove = True
                 game_scene.remove_object(self)
-                print("Collision")
             if game_object.object_type == "camera":
                 if game_scene.check_contain_object(game_object, self):
                     on_screen = True
                     game_scene.remove_object(self)
-                    print("Offscreen")
         if not on_screen:
             self.remove = True

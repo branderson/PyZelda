@@ -268,8 +268,8 @@ class WalkingState(engine.ObjectState):
                             collisions.append("hole")
                         if game_object.object_type == "jump":
                             collisions.append("jump")
-                        if game_object.object_type == "octorok":
-                            print("Octorok")
+                        # if game_object.object_type == "octorok":
+                        #     print("Octorok")
                     if "solid" in collisions:
                         link.move(previous_position)
                         link._state = CollidingState(link)
@@ -653,8 +653,8 @@ class SwordState(engine.ObjectState):
             if game_object.object_type in link.big_grass or game_object.object_type in link.short_grass:
                 if self.sword.handle_collisions:
                     if game_object.get_global_rect().colliderect(self.sword.get_global_collision_rect()):
-                        print(str(self.sword.collision_rect[0]) + ", " + str(self.sword.collision_rect[1]) + ", " +
-                              str(self.sword.collision_rect[2]) + ", " +str(self.sword.collision_rect[3]))
+                        # print(str(self.sword.collision_rect[0]) + ", " + str(self.sword.collision_rect[1]) + ", " +
+                        #       str(self.sword.collision_rect[2]) + ", " +str(self.sword.collision_rect[3]))
                         position = game_object.position
                         game_scene.remove_object(game_object)
                         game_scene.insert_object(specialtiles.GroundTile(link.resource_manager), position)
@@ -810,7 +810,7 @@ class SwordStabState(engine.ObjectState):
         self.sword_positions = [(12, 0), (0, -12), (-12, 0), (0, 12)]
         self.sword.animation_frame = 2
         self.sword.update_collisions()
-        print("Stabbing")
+        # print("Stabbing")
 
     @staticmethod
     def handle_input(link, game_scene):
@@ -833,8 +833,8 @@ class SwordStabState(engine.ObjectState):
                 if game_object.object_type in link.big_grass:
                     if self.sword.handle_collisions:
                         if game_object.get_global_rect().colliderect(self.sword.get_global_collision_rect()):
-                            print(str(self.sword.collision_rect[0]) + ", " + str(self.sword.collision_rect[1]) + ", " +
-                                  str(self.sword.collision_rect[2]) + ", " +str(self.sword.collision_rect[3]))
+                            # print(str(self.sword.collision_rect[0]) + ", " + str(self.sword.collision_rect[1]) + ", " +
+                            #       str(self.sword.collision_rect[2]) + ", " +str(self.sword.collision_rect[3]))
                             position = game_object.position
                             game_scene.remove_object(game_object)
                             game_scene.insert_object(specialtiles.GroundTile(link.resource_manager), position)
@@ -975,8 +975,8 @@ class SwordSpinState(engine.ObjectState):
             if game_object.object_type in link.big_grass or game_object.object_type in link.short_grass:
                 if self.sword.handle_collisions:
                     if game_object.get_global_rect().colliderect(self.sword.get_global_collision_rect()):
-                        print(str(self.sword.collision_rect[0]) + ", " + str(self.sword.collision_rect[1]) + ", " +
-                              str(self.sword.collision_rect[2]) + ", " +str(self.sword.collision_rect[3]))
+                        # print(str(self.sword.collision_rect[0]) + ", " + str(self.sword.collision_rect[1]) + ", " +
+                        #       str(self.sword.collision_rect[2]) + ", " +str(self.sword.collision_rect[3]))
                         position = game_object.position
                         game_scene.remove_object(game_object)
                         game_scene.insert_object(specialtiles.GroundTile(link.resource_manager), position)
