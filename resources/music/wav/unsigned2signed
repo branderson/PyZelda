@@ -1,0 +1,5 @@
+#!/bin/bash
+for f in *.wav; do 
+	yes | avconv -i "$f" -request_sample_fmt 's16' "$f";
+done
+

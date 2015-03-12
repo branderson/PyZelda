@@ -1,0 +1,6 @@
+#!/bin/bash
+for f in *.flac; do 
+	avconv -i "$f" "${f[@]/%flac/wav}";
+	rm "$f";
+done
+
