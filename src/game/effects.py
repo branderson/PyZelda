@@ -1,6 +1,6 @@
 __author__ = 'brad'
 
-import src.engine as engine
+import engine  # import src.engine as engine
 import random
 
 RESOURCE_DIR = '../resources/'

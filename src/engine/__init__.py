@@ -1,5 +1,3 @@
-from src.engine.backend import rect
-
 __author__ = 'brad'
 
 # Import engine files
