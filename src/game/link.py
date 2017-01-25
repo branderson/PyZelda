@@ -1,6 +1,7 @@
 __author__ = 'brad'
 
-import engine  # import src.engine as engine
+import os
+import src.engine as engine
 import pygame
 import effects
 import random
@@ -9,7 +10,7 @@ import specialtiles
 
 from pygame.locals import *
 
-RESOURCE_DIR = '../resources/'
+RESOURCE_DIR = os.path.join(os.path.dirname(__file__),'../../resources/') + '/'
 SPRITE_DIR = RESOURCE_DIR + 'sprite/'
 SOUND_DIR = RESOURCE_DIR + 'sound/'
 

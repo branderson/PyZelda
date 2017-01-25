@@ -1,9 +1,10 @@
 __author__ = 'brad'
 
-import engine  # import src.engine as engine
+import os
+import src.engine as engine
 import pygame
 
-RESOURCE_DIR = '../resources/'
+RESOURCE_DIR = os.path.join(os.path.dirname(__file__),'../../resources/') + '/'
 FONT_DIR = RESOURCE_DIR + 'font/'
 
 

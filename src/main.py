@@ -1,7 +1,8 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 
 __author__ = 'brad'
 import sys
+import os
 import pygame
 from pygame.locals import *
 
@@ -28,7 +29,7 @@ CLOCK_SETTINGS = (TICKS_PER_SECOND, MAX_FPS, USE_WAIT, MAX_FRAME_SKIP, UPDATE_CA
 # lambda: pygame.time.get_ticks()/1000.)
 # Mask and string constants
 COLORKEY = (64, 64, 192)
-RESOURCE_DIR = '../resources/'
+RESOURCE_DIR = os.path.join(os.path.dirname(__file__),'../resources/') + '/'
 SPRITE_DIR = RESOURCE_DIR + 'sprite/'
 SOUND_DIR = RESOURCE_DIR + 'sound/'
 MUSIC_DIR = RESOURCE_DIR + 'music/wav/'
