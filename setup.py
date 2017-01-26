@@ -57,8 +57,8 @@ setup(
         'Development Status :: 3 - Alpha',
 
         # Indicate who your project is intended for
-        'Intended Audience :: Zelda Enthusiasts',
-        'Topic :: Video Games',
+        'Intended Audience :: End Users/Desktop',
+        'Topic :: Games/Entertainment',
 
         # Pick your license as you wish (should match "license" above)
         'License :: OSI Approved :: MIT License',
